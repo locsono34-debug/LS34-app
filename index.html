@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>LS34 — Fiches de Sortie</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@700;800&family=DM+Sans:wght@300;400;500&display=swap');
+:root{--black:#0d0d0d;--cyan:#00e5ff;--gold:#C9A84C;--grey:#1a1a1a;--mid:#2a2a2a;--border:#333;--white:#f0f0f0;--red:#ff4444;--green:#00c853;}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;background:var(--black);color:var(--white);font-family:'DM Sans',sans-serif;font-size:14px;overflow:hidden;}
+.screen{display:none;flex-direction:column;height:100vh;}.screen.active{display:flex;}
+.hdr{flex-shrink:0;background:var(--grey);border-bottom:2px solid var(--cyan);padding:12px 16px;display:flex;align-items:center;gap:12px;}
+.hdr-back{background:none;border:none;color:var(--cyan);font-size:26px;cursor:pointer;padding:0 4px;line-height:1;}
+.hdr-logo{font-family:'Syne',sans-serif;font-size:20px;font-weight:800;}
+.hdr-logo span{color:var(--cyan);}
+.hdr-title{font-family:'Syne',sans-serif;font-size:16px;font-weight:800;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.hdr-badge{font-family:'DM Mono',monospace;font-size:9px;color:var(--gold);border:1px solid var(--gold);padding:3px 8px;border-radius:20px;white-space:nowrap;}
+.hdr-action{background:var(--cyan);border:none;border-radius:8px;color:#000;font-family:'Syne',sans-serif;font-size:13px;font-weight:800;padding:8px 14px;cursor:pointer;white-space:nowrap;}
+.scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;}
+.btm{flex-shrink:0;background:var(--grey);border-top:2px solid var(--border);padding:10px 14px;display:flex;gap:10px;}
+.btn{flex:1;padding:13px;border:none;border-radius:8px;font-family:'Syne',sans-serif;font-size:13px;font-weight:800;cursor:pointer;text-transform:uppercase;}
+.btn-dark{background:var(--mid);border:1px solid var(--border);color:var(--white);}
+.btn-cyan{background:var(--cyan);color:#000;}
+#screen-home .scroll{padding:14px;}
+.home-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:55vh;gap:14px;text-align:center;padding:30px 20px;}
+.home-empty-icon{font-size:56px;opacity:0.25;}
+.home-empty-title{font-family:'Syne',sans-serif;font-size:18px;font-weight:800;color:#444;}
+.home-empty-sub{font-size:13px;color:#3a3a3a;line-height:1.6;}
+.fiche-card{background:var(--grey);border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:10px;cursor:pointer;}
+.fiche-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:7px;}
+.fiche-nom{font-family:'Syne',sans-serif;font-size:15px;font-weight:800;}
+.fiche-devis{font-family:'DM Mono',monospace;font-size:10px;color:var(--cyan);background:rgba(0,229,255,0.08);border:1px solid rgba(0,229,255,0.2);padding:2px 8px;border-radius:20px;}
+.fiche-meta{font-size:12px;color:#555;display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px;}
+.fiche-actions{display:flex;gap:7px;}
+.fiche-btn{flex:1;padding:9px 6px;border-radius:7px;border:1px solid var(--border);font-family:'DM Mono',monospace;font-size:11px;cursor:pointer;text-align:center;background:var(--mid);color:var(--white);}
+.fiche-btn-share{background:rgba(0,229,255,0.08);border-color:rgba(0,229,255,0.25);color:var(--cyan);}
+.fiche-btn-mail{background:rgba(201,168,76,0.08);border-color:rgba(201,168,76,0.25);color:var(--gold);}
+.fiche-btn-del{background:rgba(255,68,68,0.08);border-color:rgba(255,68,68,0.25);color:var(--red);}
+#screen-form .scroll{padding:14px 13px 20px;}
+.card{background:var(--grey);border:1px solid var(--border);border-radius:10px;padding:15px;margin-bottom:11px;}
+.card-title{font-family:'Syne',sans-serif;font-size:11px;font-weight:700;color:var(--cyan);letter-spacing:2px;text-transform:uppercase;margin-bottom:13px;display:flex;align-items:center;gap:8px;}
+.card-title::after{content:'';flex:1;height:1px;background:var(--border);}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;}
+.fg{display:flex;flex-direction:column;gap:5px;}
+.fg label{font-size:10px;color:#666;letter-spacing:1px;text-transform:uppercase;font-family:'DM Mono',monospace;}
+.fg input{background:var(--mid);border:1px solid var(--border);border-radius:8px;color:var(--white);font-family:'DM Sans',sans-serif;font-size:15px;padding:10px 11px;outline:none;width:100%;}
+.fg input:focus{border-color:var(--cyan);}
+.toggle-row{display:flex;gap:8px;margin-top:2px;}
+.toggle-btn{flex:1;padding:10px;background:var(--mid);border:1px solid var(--border);border-radius:8px;color:#555;font-family:'DM Mono',monospace;font-size:11px;cursor:pointer;text-align:center;}
+.toggle-btn.active{background:rgba(0,229,255,0.1);border-color:var(--cyan);color:var(--cyan);}
+.sec-head{font-family:'Syne',sans-serif;font-size:13px;font-weight:800;color:var(--white);background:var(--mid);border-left:3px solid var(--gold);padding:8px 12px;border-radius:0 8px 8px 0;margin-bottom:10px;margin-top:4px;text-transform:uppercase;}
+.sub-head{font-family:'DM Mono',monospace;font-size:10px;color:#555;letter-spacing:2px;text-transform:uppercase;margin:10px 0 8px;padding-bottom:4px;border-bottom:1px solid var(--border);}
+.item-row{display:flex;align-items:flex-start;gap:10px;padding:9px 0;border-bottom:1px solid #1e1e1e;}
+.item-row:last-child{border-bottom:none;}
+.ichk{width:22px;height:22px;min-width:22px;background:var(--mid);border:2px solid var(--border);border-radius:5px;cursor:pointer;display:flex;align-items:center;justify-content:center;margin-top:1px;user-select:none;}
+.ichk.on{background:var(--cyan);border-color:var(--cyan);}
+.ichk.on::after{content:'OK';color:#000;font-size:9px;font-weight:900;}
+.icontent{flex:1;min-width:0;}
+.iname{font-size:13px;color:var(--white);line-height:1.35;}
+.iname.on{color:var(--cyan);}
+.iaccs{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px;}
+.chip{display:flex;align-items:center;gap:4px;background:#222;border:1px solid var(--border);border-radius:20px;padding:4px 10px 4px 6px;font-size:11px;color:#888;cursor:pointer;user-select:none;}
+.chip.on{background:rgba(0,229,255,0.08);border-color:var(--cyan);color:var(--cyan);}
+.cdot{width:8px;height:8px;border-radius:50%;background:#444;min-width:8px;}
+.chip.on .cdot{background:var(--cyan);}
+.iqty{display:flex;align-items:center;gap:6px;}
+.qbtn{width:30px;height:30px;background:var(--mid);border:1px solid var(--border);border-radius:6px;color:var(--white);font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:'DM Mono',monospace;user-select:none;}
+.qval{font-family:'DM Mono',monospace;font-size:15px;min-width:22px;text-align:center;}
+.qval.on{color:var(--cyan);}
+textarea{width:100%;background:var(--mid);border:1px solid var(--border);border-radius:8px;color:var(--white);font-family:'DM Sans',sans-serif;font-size:14px;padding:11px;resize:none;min-height:65px;outline:none;}
+textarea:focus{border-color:var(--cyan);}
+.sig-wrap{background:#fff;border-radius:8px;overflow:hidden;position:relative;border:2px solid var(--border);}
+.sig-wrap.on{border-color:var(--cyan);}
+#sigCanvas{display:block;width:100%;height:150px;touch-action:none;cursor:crosshair;}
+.sig-hint{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#bbb;font-size:13px;pointer-events:none;white-space:nowrap;}
+.sig-clear-btn{position:absolute;top:8px;right:8px;background:rgba(0,0,0,0.1);border:1px solid #ccc;border-radius:6px;padding:4px 11px;font-size:11px;cursor:pointer;color:#666;}
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:900;align-items:flex-end;justify-content:center;}
+.modal-bg.open{display:flex;}
+.modal{background:#1e1e1e;border:1px solid var(--border);border-radius:18px 18px 0 0;padding:22px 20px 28px;width:100%;max-width:560px;}
+.modal-handle{width:36px;height:4px;background:#444;border-radius:2px;margin:0 auto 18px;}
+.modal h2{font-family:'Syne',sans-serif;font-size:17px;color:var(--cyan);margin-bottom:14px;}
+.modal .fg{margin-bottom:11px;}
+.modal-btns{display:flex;gap:10px;margin-top:16px;}
+.modal-cancel{flex:1;padding:12px;background:var(--mid);border:1px solid var(--border);border-radius:8px;color:#777;font-family:'DM Mono',monospace;font-size:12px;cursor:pointer;}
+.modal-ok{flex:2;padding:12px;background:var(--cyan);border:none;border-radius:8px;color:#000;font-family:'Syne',sans-serif;font-size:13px;font-weight:800;cursor:pointer;}
+.modal-ok.red{background:var(--red);color:#fff;}
+.toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#1c1c1c;border:1px solid var(--cyan);color:var(--cyan);font-family:'DM Mono',monospace;font-size:12px;padding:11px 22px;border-radius:30px;z-index:999;opacity:0;transition:opacity 0.25s;white-space:nowrap;pointer-events:none;}
+.toast.show{opacity:1;}.toast.err{border-color:var(--red);color:var(--red);}.toast.ok{border-color:var(--green);color:var(--green);}
+.loading-ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:800;align-items:center;justify-content:center;flex-direction:column;gap:14px;}
+.loading-ov.open{display:flex;}
+.spinner{width:38px;height:38px;border:3px solid #2a2a2a;border-top-color:var(--cyan);border-radius:50%;animation:spin 0.8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.loading-lbl{font-family:'DM Mono',monospace;font-size:12px;color:#777;}
+@media(max-width:420px){.grid2{grid-template-columns:1fr;}.grid3{grid-template-columns:1fr 1fr;}}
+</style>
+</head>
+<body>
+<div id="screen-home" class="screen active">
+  <div class="hdr">
+    <div class="hdr-logo">LS<span>34</span></div>
+    <div style="flex:1"></div>
+    <div class="hdr-badge">FICHES</div>
+    <button class="hdr-action" onclick="openNewFiche()">+ Nouvelle</button>
+  </div>
+  <div class="scroll"><div style="padding:14px 14px 0" id="home-content"></div></div>
+</div>
+
+<div id="screen-form" class="screen">
+  <div class="hdr">
+    <button class="hdr-back" onclick="goHome()">&#8249;</button>
+    <div class="hdr-title" id="form-title">Nouvelle fiche</div>
+  </div>
+  <div class="scroll" id="formScroll">
+    <div class="card">
+      <div class="card-title">Informations client</div>
+      <div class="grid2">
+        <div class="fg"><label>Nom client</label><input type="text" id="f_nom" placeholder="Dupont Laurent" autocomplete="off"></div>
+        <div class="fg"><label>N Devis</label><input type="text" id="f_devis" placeholder="145" autocomplete="off"></div>
+      </div>
+      <div class="grid2">
+        <div class="fg"><label>Lieu</label><input type="text" id="f_lieu" placeholder="Gigean" autocomplete="off"></div>
+        <div class="fg"><label>Date</label><input type="date" id="f_date"></div>
+      </div>
+      <div class="fg" style="margin-bottom:10px">
+        <label>Type de prestation</label>
+        <div class="toggle-row">
+          <div class="toggle-btn" id="tog_avec" onclick="setInstall('avec')">Avec installation</div>
+          <div class="toggle-btn active" id="tog_sans" onclick="setInstall('sans')">Sans installation</div>
+        </div>
+      </div>
+      <div class="grid3">
+        <div class="fg"><label>Acompte EUR</label><input type="number" id="f_acompte" placeholder="0"></div>
+        <div class="fg"><label>Caution EUR</label><input type="number" id="f_caution" placeholder="0"></div>
+        <div class="fg"><label>Solde EUR</label><input type="number" id="f_solde" placeholder="0"></div>
+      </div>
+    </div>
+    <div class="sec-head">Sonorisation</div>
+    <div class="card">
+      <div class="sub-head">Materiel audio</div><div id="list_enceintes"></div>
+      <div class="sub-head">Materiel mixage</div><div id="list_mixage"></div>
+      <div class="sub-head">Micro</div>
+      <div style="font-size:11px;color:#444;margin-bottom:7px;font-style:italic">Micros sans fil livres avec : cable alimentation, boitier, antenne</div>
+      <div id="list_micro"></div>
+    </div>
+    <div class="sec-head">Eclairage / Effet</div>
+    <div class="card">
+      <div class="sub-head">Jeu de lumiere</div><div id="list_lumiere"></div>
+      <div class="sub-head">Machine a effet</div><div id="list_effet"></div>
+    </div>
+    <div class="sec-head">Accessoires</div>
+    <div class="card"><div id="list_accessoires"></div></div>
+    <div class="sec-head">Cablage</div>
+    <div class="card">
+      <div class="sub-head">Cable Audio</div><div id="list_cable_audio"></div>
+      <div class="sub-head">Cable Electrique</div><div id="list_cable_elec"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Commentaire</div>
+      <textarea id="f_commentaire" placeholder="Materiel teste, remarques..." rows="3"></textarea>
+    </div>
+    <div class="card">
+      <div class="card-title">Signature client</div>
+      <div class="sig-wrap" id="sigWrap">
+        <div class="sig-hint" id="sigHint">Signer ici avec le doigt</div>
+        <canvas id="sigCanvas"></canvas>
+        <button class="sig-clear-btn" onclick="clearSig()">Effacer</button>
+      </div>
+    </div>
+  </div>
+  <div class="btm">
+    <button class="btn btn-dark" onclick="doSave()">Enregistrer</button>
+    <button class="btn btn-cyan" onclick="doSaveAndPDF()">PDF</button>
+  </div>
+</div>
+
+<div class="modal-bg" id="emailModal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h2>Envoyer par email</h2>
+    <div class="fg"><label>Email du client</label><input type="email" id="m_email" placeholder="client@email.com"></div>
+    <div class="fg"><label>Message</label><textarea id="m_msg" placeholder="Votre fiche en piece jointe..." rows="2"></textarea></div>
+    <div class="modal-btns">
+      <button class="modal-cancel" onclick="closeModal('emailModal')">Annuler</button>
+      <button class="modal-ok" onclick="doSendEmail()">Envoyer</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="deleteModal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h2>Supprimer cette fiche ?</h2>
+    <p style="color:#666;font-size:13px;margin-bottom:4px">Cette action est irreversible.</p>
+    <div class="modal-btns">
+      <button class="modal-cancel" onclick="closeModal('deleteModal')">Annuler</button>
+      <button class="modal-ok red" onclick="doDelete()">Supprimer</button>
+    </div>
+  </div>
+</div>
+
+<div class="loading-ov" id="loadOv"><div class="spinner"></div><div class="loading-lbl" id="loadLbl">...</div></div>
+<div class="toast" id="toast"></div>
+<script>
+const CATS={list_enceintes:[{id:'e1',name:"Enceinte FBT X LITE 112A livree avec cable alimentation",acc:['Housse enceinte','Pied','Housse pied']},{id:'e2',name:"Enceinte FBT X LITE 115A livree avec cable alimentation",acc:['Housse enceinte','Pied','Housse pied']},{id:'e3',name:"Enceinte RCF ART 912A livree avec cable alimentation",acc:['Housse enceinte','Pied','Housse pied']},{id:'e4',name:"Enceinte RCF ART 915A livree avec cable alimentation",acc:['Housse enceinte','Pied','Housse pied']},{id:'e5',name:"Enceinte LD SYSTEM ICOA 15A BT livree avec cable alimentation",acc:['Housse','Pied','Housse pied']},{id:'e6',name:"Enceinte AUDIOPHONY NOMAD livree cable alimentation",acc:['Housse','Pied','Housse pied']},{id:'e7',name:"Caisson basse FBT X SUB 118SA livre avec cable alimentation",acc:['Housse','Pied','Housse pied']}],list_mixage:[{id:'m1',name:"Table mixage Numark M6 USB livree avec cable alimentation",acc:[]},{id:'m2',name:"Console mixage Yamaha MG06 livree avec cable alimentation",acc:['Valise']},{id:'m3',name:"Console mixage Yamaha MG12 livree avec cable alimentation",acc:['Valise']},{id:'m4',name:"Controleur Pioneer RX3 livre avec cable alimentation",acc:['Housse']}],list_micro:[{id:'mc1',name:'Micro filaire SHURE PGA 48',acc:['Housse']},{id:'mc2',name:'Micro filaire SHURE SM57',acc:['Housse']},{id:'mc3',name:'Micro filaire SHURE SM58',acc:['Housse']},{id:'mc4',name:'Micro ss fil SHURE BLX24E SM58',acc:['Housse']},{id:'mc5',name:'Micro ss fil PRODIPE M850',acc:['Valise']},{id:'mc6',name:'Micro sans fil T.bone vocal A',acc:['Valise']},{id:'mc7',name:'Emetteur Recepteur Definitive Audio plug 120R cable USB boite',acc:[]}],list_lumiere:[{id:'l1',name:"Macmah MULTI FX BAR cable alimentation telecommande rallonge pied cle securite",acc:['Housse Macmah','Housse pied']},{id:'l2',name:"Lyre Algam MS60 table DMX cable alimentation 2 cables DMX",acc:['Housse Algam','Pied monotube','Housse pied']}],list_effet:[{id:'ef1',name:"Machine fumee ADJ VF1300 cable alimentation telecommande",acc:['Telecommande filaire','Telecommande sans fil','Housse']},{id:'ef2',name:"Machine etincelles cable alimentation telecommande",acc:['Flight case']}],list_accessoires:[{id:'a1',name:'Facade DJ lycra blanc',acc:['Housse']},{id:'a2',name:'Lycra noir cache pied',acc:['Sac rangement']},{id:'a3',name:'Perche pour micro',acc:['Pince','Housse']}],list_cable_audio:[{id:'ca1',name:'Cable XLR M/F',acc:[]},{id:'ca2',name:'Cable Jack M/F 3.35MM',acc:[]},{id:'ca3',name:'Cable XLR Jack 6.35MM',acc:[]},{id:'ca4',name:'Cable Jack 6.35 M/F',acc:[]},{id:'ca5',name:'Cable XLR RCA',acc:[]},{id:'ca6',name:'Cable RCA RCA',acc:[]},{id:'ca7',name:'Cable RCA Jack 3.35',acc:[]},{id:'ca8',name:'Cable Jack 3.35mm 6.35',acc:[]}],list_cable_elec:[{id:'ce1',name:'Rallonge electrique',acc:[]},{id:'ce2',name:'Enrouleur electrique',acc:[]},{id:'ce3',name:'Multiprise 3',acc:[]},{id:'ce4',name:'Sac transport',acc:[]},{id:'ce5',name:'Multiprise 6',acc:[]}]};
+
+let S={},installMode='sans',currentId=null,ficheToDelete=null,emailFicheId=null;
+function resetState(){S={};Object.values(CATS).flat().forEach(item=>{S[item.id]={on:false,qty:0,acc:{}};item.acc.forEach(a=>{S[item.id].acc[a]=false;});});installMode='sans';currentId=null;}
+function loadFiches(){try{return JSON.parse(localStorage.getItem('ls34_fiches')||'[]');}catch{return[];}}
+function saveFiches(f){localStorage.setItem('ls34_fiches',JSON.stringify(f));}
+function getFiche(id){return loadFiches().find(f=>f.id===id);}
+function renderHome(){
+  const fiches=loadFiches(),el=document.getElementById('home-content');
+  el.innerHTML='';
+  if(!fiches.length){el.innerHTML='<div class="home-empty"><div class="home-empty-icon">📋</div><div class="home-empty-title">Aucune fiche</div><div class="home-empty-sub">Appuyez sur + Nouvelle pour creer votre premiere fiche.</div></div>';return;}
+  [...fiches].reverse().forEach(f=>{
+    const nb=Object.values(f.state||{}).filter(s=>s.on).length;
+    const div=document.createElement('div');div.className='fiche-card';
+    div.innerHTML='<div class="fiche-top"><div class="fiche-nom">'+(f.nom||'Sans nom')+'</div><div class="fiche-devis">N°'+(f.devis||'—')+'</div></div><div class="fiche-meta"><span>📍 '+(f.lieu||'—')+'</span><span>📅 '+(f.date||'—')+'</span><span>📦 '+nb+' article'+(nb>1?'s':'')+'</span></div><div class="fiche-actions"><button class="fiche-btn fiche-btn-share" onclick="event.stopPropagation();pdfFiche(\''+f.id+'\')">PDF</button><button class="fiche-btn fiche-btn-mail" onclick="event.stopPropagation();openEmailModal(\''+f.id+'\')">Email</button><button class="fiche-btn fiche-btn-del" onclick="event.stopPropagation();askDelete(\''+f.id+'\')">Suppr</button></div>';
+    div.addEventListener('click',()=>editFiche(f.id));
+    el.appendChild(div);
+  });
+}
+function showScreen(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');}
+function goHome(){showScreen('screen-home');renderHome();}
+function openNewFiche(){
+  resetState();
+  ['f_nom','f_devis','f_lieu','f_acompte','f_caution','f_solde','f_commentaire'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  document.getElementById('f_date').valueAsDate=new Date();
+  setInstall('sans');renderAll();clearSig();
+  document.getElementById('form-title').textContent='Nouvelle fiche';
+  document.getElementById('formScroll').scrollTop=0;
+  showScreen('screen-form');
+}
+function editFiche(id){
+  const f=getFiche(id);if(!f)return;
+  currentId=id;S=JSON.parse(JSON.stringify(f.state||{}));
+  Object.values(CATS).flat().forEach(item=>{if(!S[item.id])S[item.id]={on:false,qty:0,acc:{}};item.acc.forEach(a=>{if(S[item.id].acc[a]===undefined)S[item.id].acc[a]=false;});});
+  installMode=f.installMode||'sans';
+  document.getElementById('f_nom').value=f.nom||'';
+  document.getElementById('f_devis').value=f.devis||'';
+  document.getElementById('f_lieu').value=f.lieu||'';
+  document.getElementById('f_date').value=f.date||'';
+  document.getElementById('f_acompte').value=f.acompte||'';
+  document.getElementById('f_caution').value=f.caution||'';
+  document.getElementById('f_solde').value=f.solde||'';
+  document.getElementById('f_commentaire').value=f.commentaire||'';
+  setInstall(installMode);renderAll();clearSig();
+  if(f.signature){const img=new Image();img.onload=()=>{const ctx=sigCanvas.getContext('2d');const dpr=window.devicePixelRatio||1;ctx.drawImage(img,0,0,sigCanvas.width/dpr,sigCanvas.height/dpr);hasSig=true;document.getElementById('sigHint').style.display='none';document.getElementById('sigWrap').classList.add('on');};img.src=f.signature;}
+  document.getElementById('form-title').textContent=f.nom||'Modifier';
+  document.getElementById('formScroll').scrollTop=0;showScreen('screen-form');
+}
+function render(catId){
+  const items=CATS[catId],el=document.getElementById(catId);if(!el)return;el.innerHTML='';
+  items.forEach(item=>{
+    const s=S[item.id];
+    const row=document.createElement('div');row.className='item-row';
+    const chk=document.createElement('div');chk.className='ichk'+(s.on?' on':'');
+    chk.addEventListener('click',()=>{s.on=!s.on;if(s.on&&s.qty===0)s.qty=1;if(!s.on)s.qty=0;render(catId);});
+    const cnt=document.createElement('div');cnt.className='icontent';
+    const nm=document.createElement('div');nm.className='iname'+(s.on?' on':'');nm.textContent=item.name;cnt.appendChild(nm);
+    if(item.acc.length>0){const ar=document.createElement('div');ar.className='iaccs';item.acc.forEach(a=>{const chip=document.createElement('div');chip.className='chip'+(s.acc[a]?' on':'');const dot=document.createElement('div');dot.className='cdot';chip.appendChild(dot);chip.appendChild(document.createTextNode(a));chip.addEventListener('click',e=>{e.stopPropagation();s.acc[a]=!s.acc[a];render(catId);});ar.appendChild(chip);});cnt.appendChild(ar);}
+    const qw=document.createElement('div');qw.className='iqty';
+    const bm=document.createElement('button');bm.className='qbtn';bm.textContent='-';bm.addEventListener('click',e=>{e.stopPropagation();s.qty=Math.max(0,s.qty-1);s.on=s.qty>0;render(catId);});
+    const qn=document.createElement('div');qn.className='qval'+(s.qty>0?' on':'');qn.textContent=s.qty;
+    const bp=document.createElement('button');bp.className='qbtn';bp.textContent='+';bp.addEventListener('click',e=>{e.stopPropagation();s.qty++;s.on=true;render(catId);});
+    qw.appendChild(bm);qw.appendChild(qn);qw.appendChild(bp);
+    row.appendChild(chk);row.appendChild(cnt);row.appendChild(qw);el.appendChild(row);
+  });
+}
+function renderAll(){Object.keys(CATS).forEach(render);}
+function setInstall(v){installMode=v;document.getElementById('tog_avec').classList.toggle('active',v==='avec');document.getElementById('tog_sans').classList.toggle('active',v==='sans');}
+const sigCanvas=document.getElementById('sigCanvas'),sigCtx=sigCanvas.getContext('2d');
+let drawing=false,hasSig=false;
+function initSig(){const w=sigCanvas.parentElement.clientWidth||300,dpr=window.devicePixelRatio||1;sigCanvas.width=w*dpr;sigCanvas.height=150*dpr;sigCanvas.style.width=w+'px';sigCanvas.style.height='150px';sigCtx.setTransform(dpr,0,0,dpr,0,0);sigCtx.strokeStyle='#111';sigCtx.lineWidth=2.5;sigCtx.lineCap='round';sigCtx.lineJoin='round';}
+setTimeout(initSig,200);window.addEventListener('resize',initSig);
+function sp(e){const r=sigCanvas.getBoundingClientRect(),t=e.touches?e.touches[0]:e;return{x:t.clientX-r.left,y:t.clientY-r.top};}
+sigCanvas.addEventListener('mousedown',e=>{drawing=true;const p=sp(e);sigCtx.beginPath();sigCtx.moveTo(p.x,p.y);});
+sigCanvas.addEventListener('mousemove',e=>{if(!drawing)return;const p=sp(e);sigCtx.lineTo(p.x,p.y);sigCtx.stroke();markSig();});
+sigCanvas.addEventListener('mouseup',()=>drawing=false);
+sigCanvas.addEventListener('touchstart',e=>{e.preventDefault();drawing=true;const p=sp(e);sigCtx.beginPath();sigCtx.moveTo(p.x,p.y);},{passive:false});
+sigCanvas.addEventListener('touchmove',e=>{e.preventDefault();if(!drawing)return;const p=sp(e);sigCtx.lineTo(p.x,p.y);sigCtx.stroke();markSig();},{passive:false});
+sigCanvas.addEventListener('touchend',()=>drawing=false);
+function markSig(){hasSig=true;document.getElementById('sigHint').style.display='none';document.getElementById('sigWrap').classList.add('on');}
+function clearSig(){sigCtx.clearRect(0,0,sigCanvas.width,sigCanvas.height);hasSig=false;document.getElementById('sigHint').style.display='';document.getElementById('sigWrap').classList.remove('on');}
+function readFields(){return{nom:document.getElementById('f_nom').value.trim(),devis:document.getElementById('f_devis').value.trim(),lieu:document.getElementById('f_lieu').value.trim(),date:document.getElementById('f_date').value,acompte:document.getElementById('f_acompte').value,caution:document.getElementById('f_caution').value,solde:document.getElementById('f_solde').value,commentaire:document.getElementById('f_commentaire').value.trim(),installMode,state:JSON.parse(JSON.stringify(S)),signature:hasSig?sigCanvas.toDataURL('image/png'):null};}
+function doSave(silent=false){
+  const data=readFields(),fiches=loadFiches();
+  if(currentId){const i=fiches.findIndex(f=>f.id===currentId);if(i>=0)fiches[i]={...fiches[i],...data,updatedAt:Date.now()};}
+  else{currentId='f_'+Date.now();fiches.push({id:currentId,createdAt:Date.now(),updatedAt:Date.now(),...data});document.getElementById('form-title').textContent=data.nom||'Fiche';}
+  saveFiches(fiches);
+  if(!silent)toast('Fiche enregistree !',false,true);
+  return data;
+}
+async function doSaveAndPDF(){const data=doSave(true);showLoad('Generation PDF...');try{const doc=buildPDF(data);openPDF(doc,data);}catch(e){console.error(e);toast('Erreur: '+e.message,true);}finally{hideLoad();}}
+async function pdfFiche(id){const f=getFiche(id);if(!f)return;showLoad('Generation PDF...');try{const doc=buildPDF(f);openPDF(doc,f);}catch(e){console.error(e);toast('Erreur: '+e.message,true);}finally{hideLoad();}}
+function openPDF(doc,f){
+  try{
+    const blob=doc.output('blob');
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url;a.target='_blank';
+    a.download='LS34_'+(f.nom||'fiche')+'.pdf';
+    document.body.appendChild(a);a.click();
+    setTimeout(()=>{document.body.removeChild(a);URL.revokeObjectURL(url);},1000);
+    toast('PDF ok !',false,true);
+  }catch(e){toast('Erreur PDF: '+e.message,true);}
+}
+function askDelete(id){ficheToDelete=id;document.getElementById('deleteModal').classList.add('open');}
+function doDelete(){if(!ficheToDelete)return;saveFiches(loadFiches().filter(f=>f.id!==ficheToDelete));ficheToDelete=null;closeModal('deleteModal');renderHome();toast('Supprimee');}
+function openEmailModal(id){emailFicheId=id;document.getElementById('emailModal').classList.add('open');}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+async function doSendEmail(){
+  const email=document.getElementById('m_email').value.trim();
+  if(!email.includes('@')){toast('Email invalide',true);return;}
+  closeModal('emailModal');showLoad('Generation...');
+  try{const f=emailFicheId?getFiche(emailFicheId):readFields();if(!f)return;openPDF(buildPDF(f),f);}
+  catch(e){toast('Erreur: '+e.message,true);}finally{hideLoad();}
+}
+function buildPDF(f){
+  const{jsPDF}=window.jspdf;
+  const W=210,H=297,ML=11,PW=188;
+  const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+  const BG=[13,13,13],GR=[26,26,26],MI=[42,42,42],BO=[51,51,51];
+  const CY=[0,229,255],GO=[201,168,76],WH=[240,240,240],DI=[120,120,120];
+  let y=0,page=1;
+  const F=(...c)=>doc.setFillColor(...c);
+  const D=(...c)=>doc.setDrawColor(...c);
+  const T=(...c)=>doc.setTextColor(...c);
+  const B=s=>{doc.setFont('helvetica','bold');doc.setFontSize(s);};
+  const N=s=>{doc.setFont('helvetica','normal');doc.setFontSize(s);};
+  function footer(){F(...BG);doc.rect(0,H-8,W,8,'F');T(...DI);N(6.5);doc.text('LS34 Locsonodj34 - locsonodj34.fr - 06.31.71.36.85 - En cas de produit endommage, facture au prix du neuf',W/2,H-3,{align:'center'});doc.text('Page '+page,W-ML,H-3,{align:'right'});}
+  function np(){footer();doc.addPage();page++;F(...BG);doc.rect(0,0,W,H,'F');y=10;}
+  function chk(n){if(y+n>H-12)np();}
+  F(...BG);doc.rect(0,0,W,H,'F');
+  F(...GR);doc.rect(0,0,W,26,'F');
+  F(...CY);doc.rect(0,26,W,1,'F');
+  T(...CY);B(18);doc.text('LS34',ML,11);
+  T(...WH);B(9);doc.text('LOCSONODJ34',ML+18,11);
+  T(...WH);B(13);doc.text('FICHE DE SORTIE',W/2,10,{align:'center'});
+  T(...CY);N(7.5);doc.text('Location materiel sonorisation / eclairage',W/2,16,{align:'center'});
+  T(...GO);N(6.5);doc.text('Avenue de Poussan - 34770 Gigean',W-ML,10,{align:'right'});
+  doc.text('06.31.71.36.85 - contact@locsonodj34.fr',W-ML,16,{align:'right'});
+  T(...DI);N(6);doc.text('SIRET 93392061300017',ML,21);
+  y=32;
+  const _nom=String(f.nom||'-').substring(0,28);
+  const _devis=String(f.devis||'-');
+  const _lieu=String(f.lieu||'-').substring(0,28);
+  const _date=String(f.date||'-');
+  const _a=String(f.acompte||'-');
+  const _c=String(f.caution||'-');
+  const _s=String(f.solde||'-');
+  const _inst=f.installMode==='avec'?'Avec installation':'Sans installation';
+  F(...GR);doc.rect(ML,y,PW,34,'F');
+  D(...BO);doc.setLineWidth(0.3);doc.rect(ML,y,PW,34,'S');
+  F(...MI);doc.rect(ML,y,PW,7,'F');
+  F(...CY);doc.rect(ML,y,2.5,7,'F');
+  T(...CY);B(7.5);doc.text('INFORMATIONS CLIENT',ML+5,y+4.8);
+  T(...GO);N(7);doc.text(_inst,W-ML-3,y+4.8,{align:'right'});
+  N(7.5);T(...DI);
+  doc.text('Nom :',ML+4,y+13);doc.text('Devis :',ML+90,y+13);
+  doc.text('Lieu :',ML+4,y+20);doc.text('Date :',ML+90,y+20);
+  B(8);T(...WH);
+  doc.text(_nom,ML+16,y+13);doc.text(_devis,ML+105,y+13);
+  doc.text(_lieu,ML+16,y+20);doc.text(_date,ML+100,y+20);
+  D(...BO);doc.setLineWidth(0.2);doc.line(ML+3,y+23,ML+PW-3,y+23);
+  N(7.5);T(...DI);
+  doc.text('Acompte :',ML+4,y+29);T(...WH);B(8);doc.text(_a+' EUR',ML+23,y+29);
+  T(...DI);N(7.5);doc.text('Caution :',ML+70,y+29);T(...WH);B(8);doc.text(_c+' EUR',ML+88,y+29);
+  T(...DI);N(7.5);doc.text('Solde :',ML+125,y+29);T(...WH);B(8);doc.text(_s+' EUR',ML+140,y+29);
+  y+=39;
+  function secHead(label){chk(12);F(...MI);doc.rect(ML,y,PW,8,'F');F(...GO);doc.rect(ML,y,2.5,8,'F');T(...WH);B(8.5);doc.text(label,ML+6,y+5.5);y+=11;}
+  function drawItem(item){
+    const s=(f.state||{})[item.id];
+    if(!s||(!s.on&&!(s.qty>0)))return;
+    const accOn=Object.entries(s.acc||{}).filter(([,v])=>v).map(([k])=>String(k));
+    const lh=7.5+(accOn.length?5:0);
+    chk(lh+2);
+    F(22,22,22);doc.rect(ML,y-0.5,PW,lh,'F');
+    D(...BO);doc.setLineWidth(0.15);doc.line(ML,y+lh-0.5,ML+PW,y+lh-0.5);
+    F(...CY);doc.rect(ML+2,y+1,4.5,4.5,'F');
+    T(0,0,0);B(7);doc.text('OK',ML+2.5,y+4.8);
+    const nm=String(item.name||'').substring(0,68);
+    N(7.5);T(...WH);doc.text(nm,ML+9,y+4.8);
+    const qty='x'+String(s.qty>0?s.qty:1);
+    F(...CY);doc.roundedRect(W-ML-13,y+0.8,12,4.8,1,1,'F');
+    T(0,0,0);B(7);doc.text(qty,W-ML-7,y+4.8,{align:'center'});
+    y+=7.5;
+    if(accOn.length){chk(5);T(...CY);N(6.5);doc.text('> '+accOn.join(' - '),ML+9,y+3);y+=5;}
+  }
+  const secs=[
+    {l:'Sonorisation - Materiel audio',c:'list_enceintes'},
+    {l:'Sonorisation - Materiel mixage',c:'list_mixage'},
+    {l:'Sonorisation - Micro',c:'list_micro'},
+    {l:'Eclairage - Jeu de lumiere',c:'list_lumiere'},
+    {l:'Eclairage - Machine a effet',c:'list_effet'},
+    {l:'Accessoires',c:'list_accessoires'},
+    {l:'Cablage Audio',c:'list_cable_audio'},
+    {l:'Cablage Electrique',c:'list_cable_elec'}
+  ];
+  let any=false;
+  secs.forEach(sec=>{
+    const sel=CATS[sec.c].filter(i=>{const s=(f.state||{})[i.id];return s&&(s.on||s.qty>0);});
+    if(!sel.length)return;any=true;secHead(sec.l);sel.forEach(drawItem);y+=3;
+  });
+  if(!any){chk(20);T(...DI);N(9);doc.text('Aucun article selectionne.',W/2,y+10,{align:'center'});y+=20;}
+  if(f.commentaire){
+    const comm=String(f.commentaire);
+    chk(22);F(...GR);doc.rect(ML,y,PW,18,'F');
+    D(...BO);doc.setLineWidth(0.3);doc.rect(ML,y,PW,18,'S');
+    F(...GO);doc.rect(ML,y,2.5,18,'F');
+    T(...GO);B(7);doc.text('COMMENTAIRE',ML+5,y+5.5);
+    T(...WH);N(7.5);
+    doc.splitTextToSize(comm,PW-10).slice(0,3).forEach((l,i)=>doc.text(String(l),ML+5,y+11+(i*5)));
+    y+=22;
+  }
+  chk(48);y+=3;
+  F(...GR);doc.rect(ML,y,PW,42,'F');
+  D(...BO);doc.setLineWidth(0.3);doc.rect(ML,y,PW,42,'S');
+  F(...MI);doc.rect(ML,y,PW,7,'F');
+  F(...CY);doc.rect(ML,y,2.5,7,'F');
+  T(...CY);B(7.5);doc.text('SIGNATURE CLIENT',ML+5,y+4.8);
+  F(255,255,255);doc.rect(ML+3,y+9,90,28,'F');
+  D(...BO);doc.setLineWidth(0.3);doc.rect(ML+3,y+9,90,28,'S');
+  if(f.signature){doc.addImage(f.signature,'PNG',ML+3,y+9,90,28);}
+  else{T(180,180,180);N(7);doc.text('Signature du client',ML+48,y+25,{align:'center'});}
+  N(7);T(...DI);
+  doc.text('Lu et approuve',ML+100,y+16);
+  doc.text('Bon pour accord',ML+100,y+22);
+  doc.text('Date : _______________',ML+100,y+30);
+  N(6.5);T(...GO);doc.text('LS34 Locsonodj34',ML+100,y+38);
+  footer();
+  return doc;
+}
+
+function toast(msg,err=false,ok=false){const t=document.getElementById('toast');t.textContent=msg;t.className='toast show'+(err?' err':ok?' ok':'');clearTimeout(t._t);t._t=setTimeout(()=>{t.className='toast';},3500);}
+function showLoad(lbl){document.getElementById('loadLbl').textContent=lbl;document.getElementById('loadOv').classList.add('open');}
+function hideLoad(){document.getElementById('loadOv').classList.remove('open');}
+
+resetState();renderAll();renderHome();
+</script>
+</body>
+</html>
