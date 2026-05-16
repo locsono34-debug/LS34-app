@@ -3,443 +3,1112 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>LS34 — Fiches de Sortie</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="LS34">
+<title>LS34 Fiches</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@700;800&family=DM+Sans:wght@300;400;500&display=swap');
-:root{--black:#0d0d0d;--cyan:#00e5ff;--gold:#C9A84C;--grey:#1a1a1a;--mid:#2a2a2a;--border:#333;--white:#f0f0f0;--red:#ff4444;--green:#00c853;}
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
-html,body{height:100%;background:var(--black);color:var(--white);font-family:'DM Sans',sans-serif;font-size:14px;overflow:hidden;}
-.screen{display:none;flex-direction:column;height:100vh;}.screen.active{display:flex;}
-.hdr{flex-shrink:0;background:var(--grey);border-bottom:2px solid var(--cyan);padding:12px 16px;display:flex;align-items:center;gap:12px;}
-.hdr-back{background:none;border:none;color:var(--cyan);font-size:26px;cursor:pointer;padding:0 4px;line-height:1;}
-.hdr-logo{font-family:'Syne',sans-serif;font-size:20px;font-weight:800;}
-.hdr-logo span{color:var(--cyan);}
-.hdr-title{font-family:'Syne',sans-serif;font-size:16px;font-weight:800;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.hdr-badge{font-family:'DM Mono',monospace;font-size:9px;color:var(--gold);border:1px solid var(--gold);padding:3px 8px;border-radius:20px;white-space:nowrap;}
-.hdr-action{background:var(--cyan);border:none;border-radius:8px;color:#000;font-family:'Syne',sans-serif;font-size:13px;font-weight:800;padding:8px 14px;cursor:pointer;white-space:nowrap;}
-.scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;}
-.btm{flex-shrink:0;background:var(--grey);border-top:2px solid var(--border);padding:10px 14px;display:flex;gap:10px;}
-.btn{flex:1;padding:13px;border:none;border-radius:8px;font-family:'Syne',sans-serif;font-size:13px;font-weight:800;cursor:pointer;text-transform:uppercase;}
-.btn-dark{background:var(--mid);border:1px solid var(--border);color:var(--white);}
-.btn-cyan{background:var(--cyan);color:#000;}
-#screen-home .scroll{padding:14px;}
-.home-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:55vh;gap:14px;text-align:center;padding:30px 20px;}
-.home-empty-icon{font-size:56px;opacity:0.25;}
-.home-empty-title{font-family:'Syne',sans-serif;font-size:18px;font-weight:800;color:#444;}
-.home-empty-sub{font-size:13px;color:#3a3a3a;line-height:1.6;}
-.fiche-card{background:var(--grey);border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:10px;cursor:pointer;}
-.fiche-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:7px;}
-.fiche-nom{font-family:'Syne',sans-serif;font-size:15px;font-weight:800;}
-.fiche-devis{font-family:'DM Mono',monospace;font-size:10px;color:var(--cyan);background:rgba(0,229,255,0.08);border:1px solid rgba(0,229,255,0.2);padding:2px 8px;border-radius:20px;}
-.fiche-meta{font-size:12px;color:#555;display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px;}
-.fiche-actions{display:flex;gap:7px;}
-.fiche-btn{flex:1;padding:9px 6px;border-radius:7px;border:1px solid var(--border);font-family:'DM Mono',monospace;font-size:11px;cursor:pointer;text-align:center;background:var(--mid);color:var(--white);}
-.fiche-btn-share{background:rgba(0,229,255,0.08);border-color:rgba(0,229,255,0.25);color:var(--cyan);}
-.fiche-btn-mail{background:rgba(201,168,76,0.08);border-color:rgba(201,168,76,0.25);color:var(--gold);}
-.fiche-btn-del{background:rgba(255,68,68,0.08);border-color:rgba(255,68,68,0.25);color:var(--red);}
-#screen-form .scroll{padding:14px 13px 20px;}
-.card{background:var(--grey);border:1px solid var(--border);border-radius:10px;padding:15px;margin-bottom:11px;}
-.card-title{font-family:'Syne',sans-serif;font-size:11px;font-weight:700;color:var(--cyan);letter-spacing:2px;text-transform:uppercase;margin-bottom:13px;display:flex;align-items:center;gap:8px;}
-.card-title::after{content:'';flex:1;height:1px;background:var(--border);}
-.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;}
-.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;}
-.fg{display:flex;flex-direction:column;gap:5px;}
-.fg label{font-size:10px;color:#666;letter-spacing:1px;text-transform:uppercase;font-family:'DM Mono',monospace;}
-.fg input{background:var(--mid);border:1px solid var(--border);border-radius:8px;color:var(--white);font-family:'DM Sans',sans-serif;font-size:15px;padding:10px 11px;outline:none;width:100%;}
-.fg input:focus{border-color:var(--cyan);}
-.toggle-row{display:flex;gap:8px;margin-top:2px;}
-.toggle-btn{flex:1;padding:10px;background:var(--mid);border:1px solid var(--border);border-radius:8px;color:#555;font-family:'DM Mono',monospace;font-size:11px;cursor:pointer;text-align:center;}
-.toggle-btn.active{background:rgba(0,229,255,0.1);border-color:var(--cyan);color:var(--cyan);}
-.sec-head{font-family:'Syne',sans-serif;font-size:13px;font-weight:800;color:var(--white);background:var(--mid);border-left:3px solid var(--gold);padding:8px 12px;border-radius:0 8px 8px 0;margin-bottom:10px;margin-top:4px;text-transform:uppercase;}
-.sub-head{font-family:'DM Mono',monospace;font-size:10px;color:#555;letter-spacing:2px;text-transform:uppercase;margin:10px 0 8px;padding-bottom:4px;border-bottom:1px solid var(--border);}
-.item-row{display:flex;align-items:flex-start;gap:10px;padding:9px 0;border-bottom:1px solid #1e1e1e;}
-.item-row:last-child{border-bottom:none;}
-.ichk{width:22px;height:22px;min-width:22px;background:var(--mid);border:2px solid var(--border);border-radius:5px;cursor:pointer;display:flex;align-items:center;justify-content:center;margin-top:1px;user-select:none;}
-.ichk.on{background:var(--cyan);border-color:var(--cyan);}
-.ichk.on::after{content:'OK';color:#000;font-size:9px;font-weight:900;}
-.icontent{flex:1;min-width:0;}
-.iname{font-size:13px;color:var(--white);line-height:1.35;}
-.iname.on{color:var(--cyan);}
-.iaccs{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px;}
-.chip{display:flex;align-items:center;gap:4px;background:#222;border:1px solid var(--border);border-radius:20px;padding:4px 10px 4px 6px;font-size:11px;color:#888;cursor:pointer;user-select:none;}
-.chip.on{background:rgba(0,229,255,0.08);border-color:var(--cyan);color:var(--cyan);}
-.cdot{width:8px;height:8px;border-radius:50%;background:#444;min-width:8px;}
-.chip.on .cdot{background:var(--cyan);}
-.iqty{display:flex;align-items:center;gap:6px;}
-.qbtn{width:30px;height:30px;background:var(--mid);border:1px solid var(--border);border-radius:6px;color:var(--white);font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:'DM Mono',monospace;user-select:none;}
-.qval{font-family:'DM Mono',monospace;font-size:15px;min-width:22px;text-align:center;}
-.qval.on{color:var(--cyan);}
-textarea{width:100%;background:var(--mid);border:1px solid var(--border);border-radius:8px;color:var(--white);font-family:'DM Sans',sans-serif;font-size:14px;padding:11px;resize:none;min-height:65px;outline:none;}
-textarea:focus{border-color:var(--cyan);}
-.sig-wrap{background:#fff;border-radius:8px;overflow:hidden;position:relative;border:2px solid var(--border);}
-.sig-wrap.on{border-color:var(--cyan);}
-#sigCanvas{display:block;width:100%;height:150px;touch-action:none;cursor:crosshair;}
-.sig-hint{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#bbb;font-size:13px;pointer-events:none;white-space:nowrap;}
-.sig-clear-btn{position:absolute;top:8px;right:8px;background:rgba(0,0,0,0.1);border:1px solid #ccc;border-radius:6px;padding:4px 11px;font-size:11px;cursor:pointer;color:#666;}
-.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:900;align-items:flex-end;justify-content:center;}
-.modal-bg.open{display:flex;}
-.modal{background:#1e1e1e;border:1px solid var(--border);border-radius:18px 18px 0 0;padding:22px 20px 28px;width:100%;max-width:560px;}
-.modal-handle{width:36px;height:4px;background:#444;border-radius:2px;margin:0 auto 18px;}
-.modal h2{font-family:'Syne',sans-serif;font-size:17px;color:var(--cyan);margin-bottom:14px;}
-.modal .fg{margin-bottom:11px;}
-.modal-btns{display:flex;gap:10px;margin-top:16px;}
-.modal-cancel{flex:1;padding:12px;background:var(--mid);border:1px solid var(--border);border-radius:8px;color:#777;font-family:'DM Mono',monospace;font-size:12px;cursor:pointer;}
-.modal-ok{flex:2;padding:12px;background:var(--cyan);border:none;border-radius:8px;color:#000;font-family:'Syne',sans-serif;font-size:13px;font-weight:800;cursor:pointer;}
-.modal-ok.red{background:var(--red);color:#fff;}
-.toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#1c1c1c;border:1px solid var(--cyan);color:var(--cyan);font-family:'DM Mono',monospace;font-size:12px;padding:11px 22px;border-radius:30px;z-index:999;opacity:0;transition:opacity 0.25s;white-space:nowrap;pointer-events:none;}
-.toast.show{opacity:1;}.toast.err{border-color:var(--red);color:var(--red);}.toast.ok{border-color:var(--green);color:var(--green);}
-.loading-ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:800;align-items:center;justify-content:center;flex-direction:column;gap:14px;}
-.loading-ov.open{display:flex;}
-.spinner{width:38px;height:38px;border:3px solid #2a2a2a;border-top-color:var(--cyan);border-radius:50%;animation:spin 0.8s linear infinite;}
-@keyframes spin{to{transform:rotate(360deg);}}
-.loading-lbl{font-family:'DM Mono',monospace;font-size:12px;color:#777;}
-@media(max-width:420px){.grid2{grid-template-columns:1fr;}.grid3{grid-template-columns:1fr 1fr;}}
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#ffffff;
+  --bg2:#f5f5f5;
+  --bg3:#eeeeee;
+  --border:#dddddd;
+  --blue:#0055cc;
+  --gold:#8B6914;
+  --text:#111111;
+  --text2:#555555;
+  --text3:#888888;
+  --red:#cc0000;
+  --green:#006600;
+  --cyan:#0055cc;
+}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,sans-serif;font-size:14px;overflow:hidden;}
+.app{display:flex;flex-direction:column;height:100dvh;height:100vh;}
+.screen{display:none;flex:1;flex-direction:column;overflow:hidden;min-height:0;}
+.screen.active{display:flex;}
+
+/* HEADER */
+.hdr{flex-shrink:0;background:var(--bg);border-bottom:2px solid var(--blue);padding:12px 15px;display:flex;align-items:center;gap:10px;}
+.logo{font-size:20px;font-weight:900;letter-spacing:-0.5px;color:var(--text);}
+.logo span{color:var(--blue);}
+.hdr-title{font-size:16px;font-weight:800;flex:1;color:var(--text);}
+.hdr-back{background:none;border:none;color:var(--blue);font-size:26px;cursor:pointer;line-height:1;padding:0 4px;}
+.hdr-btn{background:var(--blue);border:none;border-radius:8px;color:#fff;font-size:12px;font-weight:900;padding:7px 14px;cursor:pointer;}
+
+/* SCROLL */
+.scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:13px;}
+
+/* BOTTOM NAV */
+.bnav{flex-shrink:0;background:var(--bg);border-top:2px solid var(--border);display:flex;padding-bottom:env(safe-area-inset-bottom,0);}
+.ntab{flex:1;padding:9px 4px 7px;background:none;border:none;color:var(--text3);cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:10px;font-family:inherit;text-transform:uppercase;letter-spacing:0.5px;}
+.ntab.on{color:var(--blue);}
+.ntab-icon{font-size:20px;line-height:1;}
+
+/* BOTTOM BAR */
+.bbar{flex-shrink:0;background:var(--bg);border-top:2px solid var(--border);padding:9px 13px;padding-bottom:calc(9px + env(safe-area-inset-bottom,0));display:flex;gap:9px;}
+.btn{flex:1;padding:13px;border:none;border-radius:8px;font-size:13px;font-weight:900;cursor:pointer;text-transform:uppercase;letter-spacing:0.5px;}
+.btn-d{background:var(--bg2);border:1px solid var(--border);color:var(--text);}
+.btn-c{background:var(--blue);color:#fff;}
+
+/* CARDS */
+.card{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:11px;box-shadow:0 1px 3px rgba(0,0,0,0.06);}
+.ctitle{font-size:11px;font-weight:700;color:var(--blue);letter-spacing:2px;text-transform:uppercase;margin-bottom:12px;display:flex;align-items:center;gap:8px;}
+.ctitle::after{content:'';flex:1;height:1px;background:var(--border);}
+
+/* FIELDS */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:9px;}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:9px;}
+.fg{display:flex;flex-direction:column;gap:4px;margin-bottom:9px;}
+.fg:last-child{margin-bottom:0;}
+.fg label{font-size:10px;color:var(--text2);letter-spacing:1px;text-transform:uppercase;}
+.fg input,.fg select,.fg textarea{background:var(--bg2);border:1px solid var(--border);border-radius:7px;color:var(--text);font-size:14px;padding:9px 10px;outline:none;width:100%;font-family:inherit;}
+.fg input:focus,.fg select:focus,.fg textarea:focus{border-color:var(--blue);}
+
+/* TOGGLE */
+.trow{display:flex;gap:7px;}
+.tbtn{flex:1;padding:9px;background:var(--bg2);border:1px solid var(--border);border-radius:7px;color:var(--text2);font-size:11px;cursor:pointer;text-align:center;font-family:inherit;transition:all 0.15s;}
+.tbtn.on{background:rgba(0,85,204,0.08);border-color:var(--blue);color:var(--blue);font-weight:700;}
+
+/* SECTIONS */
+.sh{font-size:13px;font-weight:900;color:var(--text);background:var(--bg2);border-left:3px solid var(--gold);padding:7px 11px;border-radius:0 7px 7px 0;margin-bottom:9px;margin-top:4px;text-transform:uppercase;letter-spacing:1px;}
+.sbh{font-size:10px;color:var(--text3);letter-spacing:2px;text-transform:uppercase;margin:9px 0 7px;padding-bottom:3px;border-bottom:1px solid var(--border);}
+
+/* ITEMS */
+.irow{display:flex;align-items:flex-start;gap:9px;padding:8px 0;border-bottom:1px solid var(--border);}
+.irow:last-child{border-bottom:none;}
+.ick{width:22px;height:22px;min-width:22px;background:var(--bg2);border:2px solid var(--border);border-radius:5px;cursor:pointer;display:flex;align-items:center;justify-content:center;margin-top:1px;user-select:none;transition:all 0.15s;}
+.ick.on{background:var(--blue);border-color:var(--blue);}
+.ick.on::after{content:'✓';color:#fff;font-size:13px;font-weight:900;}
+.icnt{flex:1;min-width:0;}
+.iname{font-size:13px;color:var(--text);line-height:1.3;}
+.iname.on{color:var(--blue);font-weight:600;}
+.iaccs{display:flex;flex-wrap:wrap;gap:4px;margin-top:5px;}
+.chip{display:flex;align-items:center;gap:3px;background:var(--bg2);border:1px solid var(--border);border-radius:20px;padding:3px 8px 3px 5px;font-size:11px;color:var(--text2);cursor:pointer;user-select:none;transition:all 0.15s;}
+.chip.on{background:rgba(0,85,204,0.08);border-color:var(--blue);color:var(--blue);}
+.cdot{width:7px;height:7px;border-radius:50%;background:var(--border);min-width:7px;transition:background 0.15s;}
+.chip.on .cdot{background:var(--blue);}
+.iqty{display:flex;align-items:center;gap:5px;}
+.qb{width:28px;height:28px;background:var(--bg2);border:1px solid var(--border);border-radius:5px;color:var(--text);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;user-select:none;}
+.qb:active{border-color:var(--blue);}
+.qv{font-size:15px;min-width:20px;text-align:center;color:var(--text);}
+.qv.on{color:var(--blue);font-weight:700;}
+
+/* SN BADGE */
+.sn-badge{display:inline-flex;align-items:center;gap:4px;background:rgba(0,85,204,0.06);border:1px solid rgba(0,85,204,0.2);border-radius:5px;padding:2px 7px;font-size:10px;color:var(--blue);cursor:pointer;margin-top:4px;}
+
+/* SIGNATURE */
+.sigw{background:#fff;border-radius:7px;overflow:hidden;position:relative;border:2px solid var(--border);}
+.sigw.on{border-color:var(--blue);}
+#sigC{display:block;width:100%;height:140px;touch-action:none;cursor:crosshair;}
+.sigh{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:var(--text3);font-size:13px;pointer-events:none;white-space:nowrap;}
+.sigclr{position:absolute;top:7px;right:7px;background:rgba(0,0,0,0.05);border:1px solid var(--border);border-radius:5px;padding:3px 9px;font-size:11px;cursor:pointer;color:var(--text2);}
+
+/* ANOMALIES */
+.anomalie-item{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:10px;margin-bottom:8px;position:relative;}
+.anomalie-img{width:100%;max-height:180px;object-fit:cover;border-radius:5px;margin-bottom:6px;}
+.anomalie-del{position:absolute;top:8px;right:8px;background:rgba(204,0,0,0.1);border:1px solid rgba(204,0,0,0.3);border-radius:5px;padding:3px 8px;font-size:11px;color:var(--red);cursor:pointer;}
+.photo-btn{display:flex;align-items:center;justify-content:center;gap:8px;padding:11px;background:var(--bg2);border:1px dashed var(--border);border-radius:8px;cursor:pointer;color:var(--text2);font-size:13px;width:100%;}
+.photo-btn:active{border-color:var(--blue);color:var(--blue);}
+
+/* TEST MATERIEL */
+.test-row{display:flex;gap:9px;margin-top:4px;}
+.test-btn{flex:1;display:flex;align-items:center;gap:8px;padding:11px;background:var(--bg2);border:2px solid var(--border);border-radius:8px;cursor:pointer;font-size:13px;color:var(--text2);transition:all 0.15s;}
+.test-btn.on-ok{background:rgba(0,102,0,0.06);border-color:var(--green);color:var(--green);}
+.test-btn.on-no{background:rgba(204,0,0,0.06);border-color:var(--red);color:var(--red);}
+.test-icon{font-size:20px;}
+
+/* LIST CARDS */
+.lcard{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:13px 14px;margin-bottom:9px;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,0.05);}
+.lcard:active{border-color:var(--blue);}
+.ltop{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:5px;}
+.lnom{font-size:15px;font-weight:800;color:var(--text);}
+.lbadge{font-size:10px;color:var(--blue);border:1px solid rgba(0,85,204,0.3);padding:2px 7px;border-radius:20px;white-space:nowrap;flex-shrink:0;}
+.lmeta{font-size:12px;color:var(--text2);display:flex;flex-direction:column;gap:2px;margin-bottom:8px;}
+.lact{display:flex;gap:6px;}
+.lb{flex:1;padding:8px;border-radius:6px;border:1px solid var(--border);font-size:11px;cursor:pointer;text-align:center;background:var(--bg2);color:var(--text);font-family:inherit;}
+.lb-del{background:rgba(204,0,0,0.05);border-color:rgba(204,0,0,0.2);color:var(--red);}
+.lb-ok{background:rgba(0,85,204,0.05);border-color:rgba(0,85,204,0.2);color:var(--blue);}
+
+/* EMPTY */
+.empty{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:50vh;gap:12px;text-align:center;padding:20px;}
+.ei{font-size:50px;opacity:0.2;}
+.et{font-size:17px;font-weight:900;color:var(--text3);}
+.es{font-size:12px;color:var(--text3);line-height:1.6;}
+
+/* MODAL */
+.mbg{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:900;align-items:flex-end;justify-content:center;}
+.mbg.open{display:flex;}
+.modal{background:var(--bg);border:1px solid var(--border);border-radius:16px 16px 0 0;padding:20px 17px 24px;width:100%;max-width:560px;box-shadow:0 -4px 20px rgba(0,0,0,0.1);}
+.mh{width:32px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 15px;}
+.modal h2{font-size:16px;color:var(--text);margin-bottom:12px;font-weight:800;}
+.mbtns{display:flex;gap:8px;margin-top:13px;}
+.mcancel{flex:1;padding:11px;background:var(--bg2);border:1px solid var(--border);border-radius:7px;color:var(--text2);font-size:12px;cursor:pointer;}
+.mok{flex:2;padding:11px;background:var(--blue);border:none;border-radius:7px;color:#fff;font-size:13px;font-weight:800;cursor:pointer;}
+.mok.red{background:var(--red);}
+
+/* SN MODAL */
+.sn-list{max-height:200px;overflow-y:auto;margin-bottom:10px;}
+.sn-item{display:flex;align-items:center;gap:8px;padding:8px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;margin-bottom:6px;cursor:pointer;}
+.sn-item.on{background:rgba(0,85,204,0.06);border-color:var(--blue);}
+.sn-ck{width:18px;height:18px;border-radius:3px;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.sn-item.on .sn-ck{background:var(--blue);border-color:var(--blue);}
+.sn-item.on .sn-ck::after{content:'✓';color:#fff;font-size:11px;}
+.sn-add-row{display:flex;gap:7px;margin-top:6px;}
+.sn-add-row input{flex:1;background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:8px 10px;font-size:13px;outline:none;color:var(--text);}
+.sn-add-row input:focus{border-color:var(--blue);}
+.sn-add-btn{padding:8px 14px;background:var(--blue);border:none;border-radius:6px;color:#fff;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;}
+
+/* TOAST */
+.toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:var(--text);color:#fff;font-size:12px;padding:10px 20px;border-radius:30px;z-index:999;opacity:0;transition:opacity 0.25s;white-space:nowrap;pointer-events:none;}
+.toast.show{opacity:1;}
+.toast.err{background:var(--red);}
+.toast.ok{background:var(--green);}
+
+/* LOAD */
+.lov{display:none;position:fixed;inset:0;background:rgba(255,255,255,0.85);z-index:800;align-items:center;justify-content:center;flex-direction:column;gap:12px;}
+.lov.open{display:flex;}
+.spin{width:36px;height:36px;border:3px solid var(--border);border-top-color:var(--blue);border-radius:50%;animation:sp 0.8s linear infinite;}
+@keyframes sp{to{transform:rotate(360deg);}}
+.slbl{font-size:12px;color:var(--text2);}
+
+@media(max-width:390px){.g2{grid-template-columns:1fr;}.g3{grid-template-columns:1fr 1fr;}}
 </style>
 </head>
 <body>
-<div id="screen-home" class="screen active">
-  <div class="hdr">
-    <div class="hdr-logo">LS<span>34</span></div>
-    <div style="flex:1"></div>
-    <div class="hdr-badge">FICHES</div>
-    <button class="hdr-action" onclick="openNewFiche()">+ Nouvelle</button>
-  </div>
-  <div class="scroll"><div style="padding:14px 14px 0" id="home-content"></div></div>
+<div class="app">
+
+<!-- HEADER -->
+<div class="hdr" id="hdr">
+  <div class="logo">LS<span>34</span></div>
+  <div style="flex:1"></div>
+  <button class="hdr-btn" onclick="hdrAction()" id="hdrBtn">+ Nouveau</button>
 </div>
 
-<div id="screen-form" class="screen">
-  <div class="hdr">
-    <button class="hdr-back" onclick="goHome()">&#8249;</button>
-    <div class="hdr-title" id="form-title">Nouvelle fiche</div>
-  </div>
-  <div class="scroll" id="formScroll">
+<!-- FICHES LIST -->
+<div id="sc-fiches" class="screen active">
+  <div class="scroll"><div id="fiches-list"></div></div>
+</div>
+
+<!-- FICHE FORM -->
+<div id="sc-fiche-form" class="screen">
+  <div class="scroll" id="fscroll">
+
+    <!-- CLIENT -->
     <div class="card">
-      <div class="card-title">Informations client</div>
-      <div class="grid2">
+      <div class="ctitle">Client</div>
+      <div class="fg">
+        <label>Client existant</label>
+        <select id="f_csel" onchange="autoFill(this.value)">
+          <option value="">-- Saisie manuelle --</option>
+        </select>
+      </div>
+      <div class="g2">
         <div class="fg"><label>Nom client</label><input type="text" id="f_nom" placeholder="Dupont Laurent" autocomplete="off"></div>
         <div class="fg"><label>N Devis</label><input type="text" id="f_devis" placeholder="145" autocomplete="off"></div>
       </div>
-      <div class="grid2">
+      <div class="g2">
         <div class="fg"><label>Lieu</label><input type="text" id="f_lieu" placeholder="Gigean" autocomplete="off"></div>
         <div class="fg"><label>Date</label><input type="date" id="f_date"></div>
       </div>
-      <div class="fg" style="margin-bottom:10px">
-        <label>Type de prestation</label>
-        <div class="toggle-row">
-          <div class="toggle-btn" id="tog_avec" onclick="setInstall('avec')">Avec installation</div>
-          <div class="toggle-btn active" id="tog_sans" onclick="setInstall('sans')">Sans installation</div>
+      <div class="fg">
+        <label>Prestation</label>
+        <div class="trow">
+          <div class="tbtn" id="t_avec" onclick="setInst('avec')">Avec installation</div>
+          <div class="tbtn on" id="t_sans" onclick="setInst('sans')">Sans installation</div>
         </div>
       </div>
-      <div class="grid3">
-        <div class="fg"><label>Acompte EUR</label><input type="number" id="f_acompte" placeholder="0"></div>
-        <div class="fg"><label>Caution EUR</label><input type="number" id="f_caution" placeholder="0"></div>
-        <div class="fg"><label>Solde EUR</label><input type="number" id="f_solde" placeholder="0"></div>
+      <div class="g3" style="margin-top:8px">
+        <div class="fg"><label>Acompte EUR</label><input type="number" id="f_ac" placeholder="0"></div>
+        <div class="fg"><label>Caution EUR</label><input type="number" id="f_ca" placeholder="0"></div>
+        <div class="fg"><label>Solde EUR</label><input type="number" id="f_so" placeholder="0"></div>
       </div>
     </div>
-    <div class="sec-head">Sonorisation</div>
+
+    <!-- SECTIONS MATERIEL -->
+    <div class="sh">Sonorisation</div>
     <div class="card">
-      <div class="sub-head">Materiel audio</div><div id="list_enceintes"></div>
-      <div class="sub-head">Materiel mixage</div><div id="list_mixage"></div>
-      <div class="sub-head">Micro</div>
-      <div style="font-size:11px;color:#444;margin-bottom:7px;font-style:italic">Micros sans fil livres avec : cable alimentation, boitier, antenne</div>
-      <div id="list_micro"></div>
+      <div class="sbh">Materiel audio</div><div id="list_enceintes"></div>
+      <div class="sbh">Materiel mixage</div><div id="list_mixage"></div>
+      <div class="sbh">Micro</div><div id="list_micro"></div>
     </div>
-    <div class="sec-head">Eclairage / Effet</div>
+    <div class="sh">Eclairage</div>
     <div class="card">
-      <div class="sub-head">Jeu de lumiere</div><div id="list_lumiere"></div>
-      <div class="sub-head">Machine a effet</div><div id="list_effet"></div>
+      <div class="sbh">Jeu de lumiere</div><div id="list_lumiere"></div>
+      <div class="sbh">Machine a effet</div><div id="list_effet"></div>
     </div>
-    <div class="sec-head">Accessoires</div>
+    <div class="sh">Accessoires</div>
     <div class="card"><div id="list_accessoires"></div></div>
-    <div class="sec-head">Cablage</div>
+    <div class="sh">Cablage</div>
     <div class="card">
-      <div class="sub-head">Cable Audio</div><div id="list_cable_audio"></div>
-      <div class="sub-head">Cable Electrique</div><div id="list_cable_elec"></div>
+      <div class="sbh">Cable Audio</div><div id="list_cable_audio"></div>
+      <div class="sbh">Cable Electrique</div><div id="list_cable_elec"></div>
     </div>
+    <div class="sh">Image</div>
+    <div class="card"><div id="list_image"></div></div>
+
+    <!-- ANOMALIES -->
     <div class="card">
-      <div class="card-title">Commentaire</div>
-      <textarea id="f_commentaire" placeholder="Materiel teste, remarques..." rows="3"></textarea>
+      <div class="ctitle">Anomalies constatees</div>
+      <div id="anomalies-list"></div>
+      <button class="photo-btn" onclick="addAnomalie()">
+        📷 Ajouter une photo d'anomalie
+      </button>
+      <input type="file" id="photo-input" accept="image/*" capture="environment" style="display:none" onchange="handlePhoto(this)">
     </div>
+
+    <!-- TEST MATERIEL -->
     <div class="card">
-      <div class="card-title">Signature client</div>
-      <div class="sig-wrap" id="sigWrap">
-        <div class="sig-hint" id="sigHint">Signer ici avec le doigt</div>
-        <canvas id="sigCanvas"></canvas>
-        <button class="sig-clear-btn" onclick="clearSig()">Effacer</button>
+      <div class="ctitle">Test materiel</div>
+      <div class="test-row">
+        <div class="test-btn" id="test-ok" onclick="setTest('ok')">
+          <div class="test-icon">✅</div>
+          <div>
+            <div style="font-weight:700;font-size:13px">Teste avec le client</div>
+            <div style="font-size:11px;opacity:0.7">Materiel verifie</div>
+          </div>
+        </div>
+        <div class="test-btn" id="test-no" onclick="setTest('no')">
+          <div class="test-icon">⚠️</div>
+          <div>
+            <div style="font-weight:700;font-size:13px">Non teste avec le client</div>
+            <div style="font-size:11px;opacity:0.7">Sans verification</div>
+          </div>
+        </div>
       </div>
     </div>
+
+    <!-- COMMENTAIRE -->
+    <div class="card">
+      <div class="ctitle">Commentaire</div>
+      <div class="fg"><textarea id="f_com" rows="3" placeholder="Remarques..."></textarea></div>
+    </div>
+
+    <!-- SIGNATURE -->
+    <div class="card">
+      <div class="ctitle">Signature client</div>
+      <div class="sigw" id="sigW">
+        <div class="sigh" id="sigH">Signer ici avec le doigt</div>
+        <canvas id="sigC"></canvas>
+        <button class="sigclr" onclick="clrSig()">Effacer</button>
+      </div>
+    </div>
+
   </div>
-  <div class="btm">
-    <button class="btn btn-dark" onclick="doSave()">Enregistrer</button>
-    <button class="btn btn-cyan" onclick="doSaveAndPDF()">PDF</button>
+  <div class="bbar">
+    <button class="btn btn-d" onclick="saveFiche()">Enregistrer</button>
+    <button class="btn btn-c" onclick="fichePDF()">PDF</button>
   </div>
 </div>
 
-<div class="modal-bg" id="emailModal">
+<!-- CLIENTS LIST -->
+<div id="sc-clients" class="screen">
+  <div class="scroll"><div id="clients-list"></div></div>
+</div>
+
+<!-- CLIENT FORM -->
+<div id="sc-client-form" class="screen">
+  <div class="scroll">
+    <div class="card">
+      <div class="ctitle">Informations client</div>
+      <div class="g2">
+        <div class="fg"><label>Nom</label><input type="text" id="c_nom" placeholder="Dupont" autocomplete="off"></div>
+        <div class="fg"><label>Prenom</label><input type="text" id="c_pre" placeholder="Laurent" autocomplete="off"></div>
+      </div>
+      <div class="fg"><label>Adresse postale</label><input type="text" id="c_adr" placeholder="12 rue de la Paix, 34000 Montpellier" autocomplete="off"></div>
+      <div class="fg"><label>Email</label><input type="email" id="c_email" placeholder="client@email.com"></div>
+      <div class="g2">
+        <div class="fg"><label>Telephone</label><input type="tel" id="c_tel" placeholder="06 12 34 56 78"></div>
+        <div class="fg"><label>N Devis</label><input type="text" id="c_dev" placeholder="145" autocomplete="off"></div>
+      </div>
+    </div>
+  </div>
+  <div class="bbar">
+    <button class="btn btn-c" onclick="saveClient()">Enregistrer le client</button>
+  </div>
+</div>
+
+<!-- CATALOGUE LIST -->
+<div id="sc-catalogue" class="screen">
+  <div class="scroll"><div id="cat-list"></div></div>
+</div>
+
+<!-- PRODUIT FORM -->
+<div id="sc-prod-form" class="screen">
+  <div class="scroll">
+    <div class="card">
+      <div class="ctitle">Nouveau produit</div>
+      <div class="fg"><label>Nom du produit</label><input type="text" id="p_nom" placeholder="Enceinte FBT X LITE 112A" autocomplete="off"></div>
+      <div class="fg">
+        <label>Categorie</label>
+        <select id="p_cat">
+          <option value="list_enceintes">Materiel audio</option>
+          <option value="list_mixage">Materiel mixage</option>
+          <option value="list_micro">Micro</option>
+          <option value="list_lumiere">Jeu de lumiere</option>
+          <option value="list_effet">Machine a effet</option>
+          <option value="list_accessoires">Accessoires</option>
+          <option value="list_cable_audio">Cable Audio</option>
+          <option value="list_cable_elec">Cable Electrique</option>
+          <option value="list_image">Image</option>
+        </select>
+      </div>
+      <div class="fg"><label>Accessoires (separes par virgule)</label><input type="text" id="p_acc" placeholder="Housse, Pied, Housse pied"></div>
+      <div class="fg">
+        <label>Numeros de serie (un par ligne)</label>
+        <textarea id="p_sns" rows="4" placeholder="SN001&#10;SN002&#10;SN003"></textarea>
+      </div>
+    </div>
+  </div>
+  <div class="bbar">
+    <button class="btn btn-c" onclick="saveProd()">Ajouter le produit</button>
+  </div>
+</div>
+
+<!-- NAV BAS -->
+<div class="bnav" id="bnav">
+  <button class="ntab on" id="nt-fiches" onclick="goTab('fiches')"><div class="ntab-icon">📋</div>Fiches</button>
+  <button class="ntab" id="nt-clients" onclick="goTab('clients')"><div class="ntab-icon">👥</div>Clients</button>
+  <button class="ntab" id="nt-catalogue" onclick="goTab('catalogue')"><div class="ntab-icon">📦</div>Catalogue</button>
+</div>
+</div>
+
+<!-- MODAL SUPPR -->
+<div class="mbg" id="delModal">
   <div class="modal">
-    <div class="modal-handle"></div>
+    <div class="mh"></div>
+    <h2>Supprimer ?</h2>
+    <p style="color:var(--text2);font-size:13px">Cette action est irreversible.</p>
+    <div class="mbtns">
+      <button class="mcancel" onclick="closeM('delModal')">Annuler</button>
+      <button class="mok red" onclick="confirmDel()">Supprimer</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL SN -->
+<div class="mbg" id="snModal">
+  <div class="modal">
+    <div class="mh"></div>
+    <h2 id="snModalTitle">Numeros de serie</h2>
+    <div class="sn-list" id="sn-list"></div>
+    <div class="sn-add-row">
+      <input type="text" id="sn-new" placeholder="Nouveau SN...">
+      <button class="sn-add-btn" onclick="addSNFromModal()">+ Ajouter</button>
+    </div>
+    <div class="mbtns">
+      <button class="mcancel" onclick="closeM('snModal')">Annuler</button>
+      <button class="mok" onclick="confirmSN()">Valider</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL ANOMALIE COMMENTAIRE -->
+<div class="mbg" id="anomModal">
+  <div class="modal">
+    <div class="mh"></div>
+    <h2>Description de l'anomalie</h2>
+    <div class="fg"><textarea id="anom-txt" rows="3" placeholder="Ex: Rayure sur enceinte FBT..."></textarea></div>
+    <div class="mbtns">
+      <button class="mcancel" onclick="closeM('anomModal');pendingPhoto=null">Annuler</button>
+      <button class="mok" onclick="confirmAnomalie()">Ajouter</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL EMAIL -->
+<div class="mbg" id="emailModal">
+  <div class="modal">
+    <div class="mh"></div>
     <h2>Envoyer par email</h2>
     <div class="fg"><label>Email du client</label><input type="email" id="m_email" placeholder="client@email.com"></div>
-    <div class="fg"><label>Message</label><textarea id="m_msg" placeholder="Votre fiche en piece jointe..." rows="2"></textarea></div>
-    <div class="modal-btns">
-      <button class="modal-cancel" onclick="closeModal('emailModal')">Annuler</button>
-      <button class="modal-ok" onclick="doSendEmail()">Envoyer</button>
+    <div class="mbtns">
+      <button class="mcancel" onclick="closeM('emailModal')">Annuler</button>
+      <button class="mok" onclick="doEmail()">Envoyer</button>
     </div>
   </div>
 </div>
 
-<div class="modal-bg" id="deleteModal">
-  <div class="modal">
-    <div class="modal-handle"></div>
-    <h2>Supprimer cette fiche ?</h2>
-    <p style="color:#666;font-size:13px;margin-bottom:4px">Cette action est irreversible.</p>
-    <div class="modal-btns">
-      <button class="modal-cancel" onclick="closeModal('deleteModal')">Annuler</button>
-      <button class="modal-ok red" onclick="doDelete()">Supprimer</button>
-    </div>
-  </div>
-</div>
-
-<div class="loading-ov" id="loadOv"><div class="spinner"></div><div class="loading-lbl" id="loadLbl">...</div></div>
+<div class="lov" id="lov"><div class="spin"></div><div class="slbl" id="slbl">...</div></div>
 <div class="toast" id="toast"></div>
-<script>
-const CATS={list_enceintes:[{id:'e1',name:"Enceinte FBT X LITE 112A livree avec cable alimentation",acc:['Housse enceinte','Pied','Housse pied']},{id:'e2',name:"Enceinte FBT X LITE 115A livree avec cable alimentation",acc:['Housse enceinte','Pied','Housse pied']},{id:'e3',name:"Enceinte RCF ART 912A livree avec cable alimentation",acc:['Housse enceinte','Pied','Housse pied']},{id:'e4',name:"Enceinte RCF ART 915A livree avec cable alimentation",acc:['Housse enceinte','Pied','Housse pied']},{id:'e5',name:"Enceinte LD SYSTEM ICOA 15A BT livree avec cable alimentation",acc:['Housse','Pied','Housse pied']},{id:'e6',name:"Enceinte AUDIOPHONY NOMAD livree cable alimentation",acc:['Housse','Pied','Housse pied']},{id:'e7',name:"Caisson basse FBT X SUB 118SA livre avec cable alimentation",acc:['Housse','Pied','Housse pied']}],list_mixage:[{id:'m1',name:"Table mixage Numark M6 USB livree avec cable alimentation",acc:[]},{id:'m2',name:"Console mixage Yamaha MG06 livree avec cable alimentation",acc:['Valise']},{id:'m3',name:"Console mixage Yamaha MG12 livree avec cable alimentation",acc:['Valise']},{id:'m4',name:"Controleur Pioneer RX3 livre avec cable alimentation",acc:['Housse']}],list_micro:[{id:'mc1',name:'Micro filaire SHURE PGA 48',acc:['Housse']},{id:'mc2',name:'Micro filaire SHURE SM57',acc:['Housse']},{id:'mc3',name:'Micro filaire SHURE SM58',acc:['Housse']},{id:'mc4',name:'Micro ss fil SHURE BLX24E SM58',acc:['Housse']},{id:'mc5',name:'Micro ss fil PRODIPE M850',acc:['Valise']},{id:'mc6',name:'Micro sans fil T.bone vocal A',acc:['Valise']},{id:'mc7',name:'Emetteur Recepteur Definitive Audio plug 120R cable USB boite',acc:[]}],list_lumiere:[{id:'l1',name:"Macmah MULTI FX BAR cable alimentation telecommande rallonge pied cle securite",acc:['Housse Macmah','Housse pied']},{id:'l2',name:"Lyre Algam MS60 table DMX cable alimentation 2 cables DMX",acc:['Housse Algam','Pied monotube','Housse pied']}],list_effet:[{id:'ef1',name:"Machine fumee ADJ VF1300 cable alimentation telecommande",acc:['Telecommande filaire','Telecommande sans fil','Housse']},{id:'ef2',name:"Machine etincelles cable alimentation telecommande",acc:['Flight case']}],list_accessoires:[{id:'a1',name:'Facade DJ lycra blanc',acc:['Housse']},{id:'a2',name:'Lycra noir cache pied',acc:['Sac rangement']},{id:'a3',name:'Perche pour micro',acc:['Pince','Housse']}],list_cable_audio:[{id:'ca1',name:'Cable XLR M/F',acc:[]},{id:'ca2',name:'Cable Jack M/F 3.35MM',acc:[]},{id:'ca3',name:'Cable XLR Jack 6.35MM',acc:[]},{id:'ca4',name:'Cable Jack 6.35 M/F',acc:[]},{id:'ca5',name:'Cable XLR RCA',acc:[]},{id:'ca6',name:'Cable RCA RCA',acc:[]},{id:'ca7',name:'Cable RCA Jack 3.35',acc:[]},{id:'ca8',name:'Cable Jack 3.35mm 6.35',acc:[]}],list_cable_elec:[{id:'ce1',name:'Rallonge electrique',acc:[]},{id:'ce2',name:'Enrouleur electrique',acc:[]},{id:'ce3',name:'Multiprise 3',acc:[]},{id:'ce4',name:'Sac transport',acc:[]},{id:'ce5',name:'Multiprise 6',acc:[]}]};
 
-let S={},installMode='sans',currentId=null,ficheToDelete=null,emailFicheId=null;
-function resetState(){S={};Object.values(CATS).flat().forEach(item=>{S[item.id]={on:false,qty:0,acc:{}};item.acc.forEach(a=>{S[item.id].acc[a]=false;});});installMode='sans';currentId=null;}
-function loadFiches(){try{return JSON.parse(localStorage.getItem('ls34_fiches')||'[]');}catch{return[];}}
-function saveFiches(f){localStorage.setItem('ls34_fiches',JSON.stringify(f));}
-function getFiche(id){return loadFiches().find(f=>f.id===id);}
-function renderHome(){
-  const fiches=loadFiches(),el=document.getElementById('home-content');
+<script>
+// ══ CATALOGUE PAR DEFAUT ══
+const DEF={
+  list_enceintes:[{id:'e1',name:"Enceinte FBT X LITE 112A",acc:['Housse enceinte','Pied','Housse pied'],sns:[]},{id:'e2',name:"Enceinte FBT X LITE 115A",acc:['Housse enceinte','Pied','Housse pied'],sns:[]},{id:'e3',name:"Enceinte RCF ART 912A",acc:['Housse enceinte','Pied','Housse pied'],sns:[]},{id:'e4',name:"Enceinte RCF ART 915A",acc:['Housse enceinte','Pied','Housse pied'],sns:[]},{id:'e5',name:"Enceinte LD SYSTEM ICOA 15A BT",acc:['Housse','Pied','Housse pied'],sns:[]},{id:'e6',name:"Enceinte AUDIOPHONY NOMAD",acc:['Housse','Pied','Housse pied'],sns:[]},{id:'e7',name:"Caisson basse FBT X SUB 118SA",acc:['Housse','Pied','Housse pied'],sns:[]}],
+  list_mixage:[{id:'m1',name:"Table mixage Numark M6 USB",acc:[],sns:[]},{id:'m2',name:"Console mixage Yamaha MG06",acc:['Valise'],sns:[]},{id:'m3',name:"Console mixage Yamaha MG12",acc:['Valise'],sns:[]},{id:'m4',name:"Controleur Pioneer RX3",acc:['Housse'],sns:[]}],
+  list_micro:[{id:'mc1',name:'Micro filaire SHURE PGA 48',acc:['Housse'],sns:[]},{id:'mc2',name:'Micro filaire SHURE SM57',acc:['Housse'],sns:[]},{id:'mc3',name:'Micro filaire SHURE SM58',acc:['Housse'],sns:[]},{id:'mc4',name:'Micro ss fil SHURE BLX24E SM58',acc:['Housse'],sns:[]},{id:'mc5',name:'Micro ss fil PRODIPE M850',acc:['Valise'],sns:[]},{id:'mc6',name:'Micro sans fil T.bone vocal A',acc:['Valise'],sns:[]},{id:'mc7',name:'Emetteur Recepteur Definitive Audio plug 120R',acc:[],sns:[]}],
+  list_lumiere:[{id:'l1',name:"Macmah MULTI FX BAR",acc:['Housse Macmah','Housse pied'],sns:[]},{id:'l2',name:"Lyre Algam MS60",acc:['Housse Algam','Pied monotube','Housse pied'],sns:[]}],
+  list_effet:[{id:'ef1',name:"Machine fumee ADJ VF1300",acc:['Telecommande filaire','Telecommande sans fil','Housse'],sns:[]},{id:'ef2',name:"Machine etincelles",acc:['Flight case'],sns:[]}],
+  list_accessoires:[{id:'a1',name:'Facade DJ lycra blanc',acc:['Housse'],sns:[]},{id:'a2',name:'Lycra noir cache pied',acc:['Sac rangement'],sns:[]},{id:'a3',name:'Perche pour micro',acc:['Pince','Housse'],sns:[]}],
+  list_cable_audio:[{id:'ca1',name:'Cable XLR M/F',acc:[],sns:[]},{id:'ca2',name:'Cable Jack M/F 3.35MM',acc:[],sns:[]},{id:'ca3',name:'Cable XLR Jack 6.35MM',acc:[],sns:[]},{id:'ca4',name:'Cable Jack 6.35 M/F',acc:[],sns:[]},{id:'ca5',name:'Cable XLR RCA',acc:[],sns:[]},{id:'ca6',name:'Cable RCA RCA',acc:[],sns:[]},{id:'ca7',name:'Cable RCA Jack 3.35',acc:[],sns:[]},{id:'ca8',name:'Cable Jack 3.35mm 6.35',acc:[],sns:[]}],
+  list_cable_elec:[{id:'ce1',name:'Rallonge electrique',acc:[],sns:[]},{id:'ce2',name:'Enrouleur electrique',acc:[],sns:[]},{id:'ce3',name:'Multiprise 3',acc:[],sns:[]},{id:'ce4',name:'Sac transport',acc:[],sns:[]},{id:'ce5',name:'Multiprise 6',acc:[],sns:[]}],
+  list_image:[]
+};
+const CATS_LABELS={list_enceintes:'Materiel audio',list_mixage:'Materiel mixage',list_micro:'Micro',list_lumiere:'Jeu de lumiere',list_effet:'Machine a effet',list_accessoires:'Accessoires',list_cable_audio:'Cable Audio',list_cable_elec:'Cable Electrique',list_image:'Image'};
+
+function getCats(){try{const c=JSON.parse(localStorage.getItem('ls34_cats'));return c||JSON.parse(JSON.stringify(DEF));}catch{return JSON.parse(JSON.stringify(DEF));}}
+function setCats(c){localStorage.setItem('ls34_cats',JSON.stringify(c));}
+function getFiches(){try{return JSON.parse(localStorage.getItem('ls34_fiches')||'[]');}catch{return[];}}
+function setFiches(f){localStorage.setItem('ls34_fiches',JSON.stringify(f));}
+function getClients(){try{return JSON.parse(localStorage.getItem('ls34_clients')||'[]');}catch{return[];}}
+function setClients(c){localStorage.setItem('ls34_clients',JSON.stringify(c));}
+
+// ══ STATE ══
+let S={},inst='sans',fId=null,cId=null,curTab='fiches';
+let delType=null,delId=null,delCat=null;
+let snItemId=null,snTempSel=[];
+let anomalies=[]; // [{photo:base64, desc:string}]
+let pendingPhoto=null;
+let testMode=null; // 'ok' | 'no' | null
+let emailFicheId=null;
+
+function resetS(){
+  S={};
+  Object.values(getCats()).flat().forEach(it=>{
+    S[it.id]={on:false,qty:0,acc:{},sns:[]};
+    it.acc.forEach(a=>{S[it.id].acc[a]=false;});
+  });
+  inst='sans';fId=null;anomalies=[];testMode=null;
+}
+
+// ══ NAV ══
+function goTab(tab){
+  curTab=tab;
+  document.querySelectorAll('.ntab').forEach(t=>t.classList.remove('on'));
+  document.getElementById('nt-'+tab).classList.add('on');
+  if(tab==='fiches'){showSc('sc-fiches');rFiches();setHdr(null,'fiches');}
+  if(tab==='clients'){showSc('sc-clients');rClients();setHdr(null,'clients');}
+  if(tab==='catalogue'){showSc('sc-catalogue');rCat();setHdr(null,'catalogue');}
+}
+function showSc(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  const isForm=['sc-fiche-form','sc-client-form','sc-prod-form'].includes(id);
+  document.getElementById('bnav').style.display=isForm?'none':'flex';
+}
+function setHdr(back,title){
+  const h=document.getElementById('hdr');
+  const labels={fiches:'Fiches de sortie',clients:'Clients',catalogue:'Catalogue'};
+  const lbl=labels[title]||title||'';
+  if(back){
+    h.innerHTML=`<button class="hdr-back" onclick="goTab('${back}')">&#8249;</button><div class="hdr-title">${lbl}</div>`;
+  }else{
+    h.innerHTML=`<div class="logo">LS<span>34</span></div><div style="flex:1"></div><button class="hdr-btn" onclick="hdrAction()">+ Nouveau</button>`;
+  }
+}
+function hdrAction(){
+  if(curTab==='fiches')openFicheForm();
+  if(curTab==='clients')openClientForm();
+  if(curTab==='catalogue')openProdForm();
+}
+
+// ══ FICHES LIST ══
+function rFiches(){
+  const fiches=getFiches(),el=document.getElementById('fiches-list');
   el.innerHTML='';
-  if(!fiches.length){el.innerHTML='<div class="home-empty"><div class="home-empty-icon">📋</div><div class="home-empty-title">Aucune fiche</div><div class="home-empty-sub">Appuyez sur + Nouvelle pour creer votre premiere fiche.</div></div>';return;}
+  if(!fiches.length){el.innerHTML='<div class="empty"><div class="ei">📋</div><div class="et">Aucune fiche</div><div class="es">Appuyez sur + Nouveau<br>pour creer votre premiere fiche.</div></div>';return;}
   [...fiches].reverse().forEach(f=>{
     const nb=Object.values(f.state||{}).filter(s=>s.on).length;
-    const div=document.createElement('div');div.className='fiche-card';
-    div.innerHTML='<div class="fiche-top"><div class="fiche-nom">'+(f.nom||'Sans nom')+'</div><div class="fiche-devis">N°'+(f.devis||'—')+'</div></div><div class="fiche-meta"><span>📍 '+(f.lieu||'—')+'</span><span>📅 '+(f.date||'—')+'</span><span>📦 '+nb+' article'+(nb>1?'s':'')+'</span></div><div class="fiche-actions"><button class="fiche-btn fiche-btn-share" onclick="event.stopPropagation();pdfFiche(\''+f.id+'\')">PDF</button><button class="fiche-btn fiche-btn-mail" onclick="event.stopPropagation();openEmailModal(\''+f.id+'\')">Email</button><button class="fiche-btn fiche-btn-del" onclick="event.stopPropagation();askDelete(\''+f.id+'\')">Suppr</button></div>';
-    div.addEventListener('click',()=>editFiche(f.id));
-    el.appendChild(div);
+    const d=document.createElement('div');d.className='lcard';
+    const testBadge=f.testMode==='ok'?'<span style="color:var(--green);font-size:11px">✅ Teste</span>':f.testMode==='no'?'<span style="color:var(--red);font-size:11px">⚠️ Non teste</span>':'';
+    d.innerHTML=`<div class="ltop"><div class="lnom">${f.nom||'Sans nom'}</div><span class="lbadge">N°${f.devis||'—'}</span></div><div class="lmeta"><span>📍 ${f.lieu||'—'} — 📅 ${f.date||'—'}</span><span>📦 ${nb} article${nb>1?'s':''} ${testBadge}</span></div><div class="lact"><button class="lb lb-ok" onclick="event.stopPropagation();pdfF('${f.id}')">PDF</button><button class="lb lb-ok" onclick="event.stopPropagation();openEmailForFiche('${f.id}')">Email</button><button class="lb lb-del" onclick="event.stopPropagation();askDel('fiche','${f.id}')">Suppr</button></div>`;
+    d.addEventListener('click',()=>editFiche(f.id));
+    el.appendChild(d);
   });
 }
-function showScreen(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');}
-function goHome(){showScreen('screen-home');renderHome();}
-function openNewFiche(){
-  resetState();
-  ['f_nom','f_devis','f_lieu','f_acompte','f_caution','f_solde','f_commentaire'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+
+// ══ FICHE FORM ══
+function openFicheForm(){
+  resetS();
+  ['f_nom','f_devis','f_lieu','f_ac','f_ca','f_so','f_com'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
   document.getElementById('f_date').valueAsDate=new Date();
-  setInstall('sans');renderAll();clearSig();
-  document.getElementById('form-title').textContent='Nouvelle fiche';
-  document.getElementById('formScroll').scrollTop=0;
-  showScreen('screen-form');
+  setInst('sans');rAllItems();clrSig();fillCSel();rAnomalies();setTest(null);
+  showSc('sc-fiche-form');setHdr('fiches','Nouvelle fiche');
+  document.getElementById('fscroll').scrollTop=0;
 }
+
 function editFiche(id){
-  const f=getFiche(id);if(!f)return;
-  currentId=id;S=JSON.parse(JSON.stringify(f.state||{}));
-  Object.values(CATS).flat().forEach(item=>{if(!S[item.id])S[item.id]={on:false,qty:0,acc:{}};item.acc.forEach(a=>{if(S[item.id].acc[a]===undefined)S[item.id].acc[a]=false;});});
-  installMode=f.installMode||'sans';
-  document.getElementById('f_nom').value=f.nom||'';
-  document.getElementById('f_devis').value=f.devis||'';
-  document.getElementById('f_lieu').value=f.lieu||'';
-  document.getElementById('f_date').value=f.date||'';
-  document.getElementById('f_acompte').value=f.acompte||'';
-  document.getElementById('f_caution').value=f.caution||'';
-  document.getElementById('f_solde').value=f.solde||'';
-  document.getElementById('f_commentaire').value=f.commentaire||'';
-  setInstall(installMode);renderAll();clearSig();
-  if(f.signature){const img=new Image();img.onload=()=>{const ctx=sigCanvas.getContext('2d');const dpr=window.devicePixelRatio||1;ctx.drawImage(img,0,0,sigCanvas.width/dpr,sigCanvas.height/dpr);hasSig=true;document.getElementById('sigHint').style.display='none';document.getElementById('sigWrap').classList.add('on');};img.src=f.signature;}
-  document.getElementById('form-title').textContent=f.nom||'Modifier';
-  document.getElementById('formScroll').scrollTop=0;showScreen('screen-form');
-}
-function render(catId){
-  const items=CATS[catId],el=document.getElementById(catId);if(!el)return;el.innerHTML='';
-  items.forEach(item=>{
-    const s=S[item.id];
-    const row=document.createElement('div');row.className='item-row';
-    const chk=document.createElement('div');chk.className='ichk'+(s.on?' on':'');
-    chk.addEventListener('click',()=>{s.on=!s.on;if(s.on&&s.qty===0)s.qty=1;if(!s.on)s.qty=0;render(catId);});
-    const cnt=document.createElement('div');cnt.className='icontent';
-    const nm=document.createElement('div');nm.className='iname'+(s.on?' on':'');nm.textContent=item.name;cnt.appendChild(nm);
-    if(item.acc.length>0){const ar=document.createElement('div');ar.className='iaccs';item.acc.forEach(a=>{const chip=document.createElement('div');chip.className='chip'+(s.acc[a]?' on':'');const dot=document.createElement('div');dot.className='cdot';chip.appendChild(dot);chip.appendChild(document.createTextNode(a));chip.addEventListener('click',e=>{e.stopPropagation();s.acc[a]=!s.acc[a];render(catId);});ar.appendChild(chip);});cnt.appendChild(ar);}
-    const qw=document.createElement('div');qw.className='iqty';
-    const bm=document.createElement('button');bm.className='qbtn';bm.textContent='-';bm.addEventListener('click',e=>{e.stopPropagation();s.qty=Math.max(0,s.qty-1);s.on=s.qty>0;render(catId);});
-    const qn=document.createElement('div');qn.className='qval'+(s.qty>0?' on':'');qn.textContent=s.qty;
-    const bp=document.createElement('button');bp.className='qbtn';bp.textContent='+';bp.addEventListener('click',e=>{e.stopPropagation();s.qty++;s.on=true;render(catId);});
-    qw.appendChild(bm);qw.appendChild(qn);qw.appendChild(bp);
-    row.appendChild(chk);row.appendChild(cnt);row.appendChild(qw);el.appendChild(row);
+  const f=getFiches().find(x=>x.id===id);if(!f)return;
+  fId=id;
+  S=JSON.parse(JSON.stringify(f.state||{}));
+  Object.values(getCats()).flat().forEach(it=>{
+    if(!S[it.id])S[it.id]={on:false,qty:0,acc:{},sns:[]};
+    it.acc.forEach(a=>{if(S[it.id].acc[a]===undefined)S[it.id].acc[a]=false;});
+    if(!S[it.id].sns)S[it.id].sns=[];
   });
+  inst=f.installMode||'sans';
+  anomalies=f.anomalies||[];
+  testMode=f.testMode||null;
+  ['f_nom','f_devis','f_lieu','f_date','f_ac','f_ca','f_so','f_com'].forEach(fId2=>{
+    const map={f_nom:'nom',f_devis:'devis',f_lieu:'lieu',f_date:'date',f_ac:'acompte',f_ca:'caution',f_so:'solde',f_com:'commentaire'};
+    const e=document.getElementById(fId2);if(e)e.value=f[map[fId2]]||'';
+  });
+  setInst(inst);rAllItems();clrSig();fillCSel();rAnomalies();setTest(testMode);
+  if(f.signature){const img=new Image();img.onload=()=>{const ctx=sigC.getContext('2d');const dpr=window.devicePixelRatio||1;ctx.drawImage(img,0,0,sigC.width/dpr,sigC.height/dpr);hasSig=true;document.getElementById('sigH').style.display='none';document.getElementById('sigW').classList.add('on');};img.src=f.signature;}
+  showSc('sc-fiche-form');setHdr('fiches',f.nom||'Modifier');
+  document.getElementById('fscroll').scrollTop=0;
 }
-function renderAll(){Object.keys(CATS).forEach(render);}
-function setInstall(v){installMode=v;document.getElementById('tog_avec').classList.toggle('active',v==='avec');document.getElementById('tog_sans').classList.toggle('active',v==='sans');}
-const sigCanvas=document.getElementById('sigCanvas'),sigCtx=sigCanvas.getContext('2d');
-let drawing=false,hasSig=false;
-function initSig(){const w=sigCanvas.parentElement.clientWidth||300,dpr=window.devicePixelRatio||1;sigCanvas.width=w*dpr;sigCanvas.height=150*dpr;sigCanvas.style.width=w+'px';sigCanvas.style.height='150px';sigCtx.setTransform(dpr,0,0,dpr,0,0);sigCtx.strokeStyle='#111';sigCtx.lineWidth=2.5;sigCtx.lineCap='round';sigCtx.lineJoin='round';}
-setTimeout(initSig,200);window.addEventListener('resize',initSig);
-function sp(e){const r=sigCanvas.getBoundingClientRect(),t=e.touches?e.touches[0]:e;return{x:t.clientX-r.left,y:t.clientY-r.top};}
-sigCanvas.addEventListener('mousedown',e=>{drawing=true;const p=sp(e);sigCtx.beginPath();sigCtx.moveTo(p.x,p.y);});
-sigCanvas.addEventListener('mousemove',e=>{if(!drawing)return;const p=sp(e);sigCtx.lineTo(p.x,p.y);sigCtx.stroke();markSig();});
-sigCanvas.addEventListener('mouseup',()=>drawing=false);
-sigCanvas.addEventListener('touchstart',e=>{e.preventDefault();drawing=true;const p=sp(e);sigCtx.beginPath();sigCtx.moveTo(p.x,p.y);},{passive:false});
-sigCanvas.addEventListener('touchmove',e=>{e.preventDefault();if(!drawing)return;const p=sp(e);sigCtx.lineTo(p.x,p.y);sigCtx.stroke();markSig();},{passive:false});
-sigCanvas.addEventListener('touchend',()=>drawing=false);
-function markSig(){hasSig=true;document.getElementById('sigHint').style.display='none';document.getElementById('sigWrap').classList.add('on');}
-function clearSig(){sigCtx.clearRect(0,0,sigCanvas.width,sigCanvas.height);hasSig=false;document.getElementById('sigHint').style.display='';document.getElementById('sigWrap').classList.remove('on');}
-function readFields(){return{nom:document.getElementById('f_nom').value.trim(),devis:document.getElementById('f_devis').value.trim(),lieu:document.getElementById('f_lieu').value.trim(),date:document.getElementById('f_date').value,acompte:document.getElementById('f_acompte').value,caution:document.getElementById('f_caution').value,solde:document.getElementById('f_solde').value,commentaire:document.getElementById('f_commentaire').value.trim(),installMode,state:JSON.parse(JSON.stringify(S)),signature:hasSig?sigCanvas.toDataURL('image/png'):null};}
-function doSave(silent=false){
-  const data=readFields(),fiches=loadFiches();
-  if(currentId){const i=fiches.findIndex(f=>f.id===currentId);if(i>=0)fiches[i]={...fiches[i],...data,updatedAt:Date.now()};}
-  else{currentId='f_'+Date.now();fiches.push({id:currentId,createdAt:Date.now(),updatedAt:Date.now(),...data});document.getElementById('form-title').textContent=data.nom||'Fiche';}
-  saveFiches(fiches);
+
+function fillCSel(){
+  const sel=document.getElementById('f_csel');
+  sel.innerHTML='<option value="">-- Saisie manuelle --</option>';
+  getClients().forEach(c=>{const o=document.createElement('option');o.value=c.id;o.textContent=c.nom+' '+c.pre+(c.dev?' ('+c.dev+')':'');sel.appendChild(o);});
+}
+function autoFill(id){
+  if(!id)return;
+  const c=getClients().find(x=>x.id===id);if(!c)return;
+  document.getElementById('f_nom').value=c.nom+' '+c.pre;
+  document.getElementById('f_devis').value=c.dev||'';
+}
+
+function readFiche(){
+  return{
+    nom:document.getElementById('f_nom').value.trim(),
+    devis:document.getElementById('f_devis').value.trim(),
+    lieu:document.getElementById('f_lieu').value.trim(),
+    date:document.getElementById('f_date').value,
+    acompte:document.getElementById('f_ac').value,
+    caution:document.getElementById('f_ca').value,
+    solde:document.getElementById('f_so').value,
+    commentaire:document.getElementById('f_com').value.trim(),
+    installMode:inst,
+    state:JSON.parse(JSON.stringify(S)),
+    signature:hasSig?sigC.toDataURL('image/png'):null,
+    anomalies:JSON.parse(JSON.stringify(anomalies)),
+    testMode
+  };
+}
+
+function saveFiche(silent=false){
+  const data=readFiche(),fiches=getFiches();
+  if(fId){const i=fiches.findIndex(f=>f.id===fId);if(i>=0)fiches[i]={...fiches[i],...data,updatedAt:Date.now()};}
+  else{fId='f_'+Date.now();fiches.push({id:fId,createdAt:Date.now(),...data});}
+  setFiches(fiches);
   if(!silent)toast('Fiche enregistree !',false,true);
   return data;
 }
-async function doSaveAndPDF(){const data=doSave(true);showLoad('Generation PDF...');try{const doc=buildPDF(data);openPDF(doc,data);}catch(e){console.error(e);toast('Erreur: '+e.message,true);}finally{hideLoad();}}
-async function pdfFiche(id){const f=getFiche(id);if(!f)return;showLoad('Generation PDF...');try{const doc=buildPDF(f);openPDF(doc,f);}catch(e){console.error(e);toast('Erreur: '+e.message,true);}finally{hideLoad();}}
+
+function fichePDF(){
+  const data=saveFiche(true);
+  showL('Generation PDF...');
+  try{openPDF(buildPDF(data),data);}
+  catch(e){console.error(e);toast('Erreur: '+e.message,true);}
+  finally{hideL();}
+}
+function pdfF(id){
+  const f=getFiches().find(x=>x.id===id);if(!f)return;
+  showL('Generation PDF...');
+  try{openPDF(buildPDF(f),f);}
+  catch(e){console.error(e);toast('Erreur: '+e.message,true);}
+  finally{hideL();}
+}
 function openPDF(doc,f){
   try{
     const blob=doc.output('blob');
     const url=URL.createObjectURL(blob);
-    const a=document.createElement('a');
-    a.href=url;a.target='_blank';
-    a.download='LS34_'+(f.nom||'fiche')+'.pdf';
-    document.body.appendChild(a);a.click();
-    setTimeout(()=>{document.body.removeChild(a);URL.revokeObjectURL(url);},1000);
+    const nom=f.nom||'fiche',dev=f.devis||'000';
+    if(navigator.canShare&&navigator.canShare({files:[new File([blob],'test.pdf',{type:'application/pdf'})]})){
+      const file=new File([blob],`LS34_${nom}_${dev}.pdf`,{type:'application/pdf'});
+      navigator.share({files:[file],title:`Fiche de sortie - ${nom}`}).catch(()=>{});
+    } else {
+      const w=window.open(url,'_blank');
+      if(!w){const a=document.createElement('a');a.href=url;a.download=`LS34_${nom}_${dev}.pdf`;a.target='_blank';document.body.appendChild(a);a.click();setTimeout(()=>document.body.removeChild(a),500);}
+    }
     toast('PDF ok !',false,true);
   }catch(e){toast('Erreur PDF: '+e.message,true);}
 }
-function askDelete(id){ficheToDelete=id;document.getElementById('deleteModal').classList.add('open');}
-function doDelete(){if(!ficheToDelete)return;saveFiches(loadFiches().filter(f=>f.id!==ficheToDelete));ficheToDelete=null;closeModal('deleteModal');renderHome();toast('Supprimee');}
-function openEmailModal(id){emailFicheId=id;document.getElementById('emailModal').classList.add('open');}
-function closeModal(id){document.getElementById(id).classList.remove('open');}
-async function doSendEmail(){
+
+// ══ ITEMS ══
+function rItems(catId){
+  const cats=getCats();const items=cats[catId]||[];
+  const el=document.getElementById(catId);if(!el)return;el.innerHTML='';
+  if(!items.length&&catId==='list_image'){
+    el.innerHTML='<div style="font-size:12px;color:var(--text3);padding:8px 0;font-style:italic">Aucun produit — ajoutez depuis Catalogue</div>';
+    return;
+  }
+  items.forEach(it=>{
+    if(!S[it.id])S[it.id]={on:false,qty:0,acc:{},sns:[]};
+    if(!S[it.id].sns)S[it.id].sns=[];
+    it.acc.forEach(a=>{if(S[it.id].acc[a]===undefined)S[it.id].acc[a]=false;});
+    const s=S[it.id];
+    const row=document.createElement('div');row.className='irow';
+    const ck=document.createElement('div');ck.className='ick'+(s.on?' on':'');
+    ck.addEventListener('click',()=>{s.on=!s.on;if(s.on&&s.qty===0)s.qty=1;if(!s.on)s.qty=0;rItems(catId);});
+    const cnt=document.createElement('div');cnt.className='icnt';
+    const nm=document.createElement('div');nm.className='iname'+(s.on?' on':'');nm.textContent=it.name;cnt.appendChild(nm);
+    // Accessoires
+    if(it.acc.length){
+      const ar=document.createElement('div');ar.className='iaccs';
+      it.acc.forEach(a=>{
+        const chip=document.createElement('div');chip.className='chip'+(s.acc[a]?' on':'');
+        const dot=document.createElement('div');dot.className='cdot';chip.appendChild(dot);
+        chip.appendChild(document.createTextNode(a));
+        chip.addEventListener('click',e=>{e.stopPropagation();s.acc[a]=!s.acc[a];rItems(catId);});
+        ar.appendChild(chip);
+      });
+      cnt.appendChild(ar);
+    }
+    // SN badge si l'article a des SN disponibles ou sélectionnés
+    if(it.sns&&it.sns.length>0){
+      const snBtn=document.createElement('div');snBtn.className='sn-badge';
+      const selCount=s.sns?s.sns.length:0;
+      snBtn.innerHTML='&#128290; SN ' + (selCount>0 ? '('+selCount+' selectionne'+(selCount>1?'s':'')+')' : 'a selectionner');
+      snBtn.addEventListener('click',e=>{e.stopPropagation();openSNModal(it.id,it.name);});
+      cnt.appendChild(snBtn);
+    }
+    // Qty
+    const qw=document.createElement('div');qw.className='iqty';
+    const bm=document.createElement('button');bm.className='qb';bm.textContent='-';bm.addEventListener('click',e=>{e.stopPropagation();s.qty=Math.max(0,s.qty-1);s.on=s.qty>0;rItems(catId);});
+    const qn=document.createElement('div');qn.className='qv'+(s.qty>0?' on':'');qn.textContent=s.qty;
+    const bp=document.createElement('button');bp.className='qb';bp.textContent='+';bp.addEventListener('click',e=>{e.stopPropagation();s.qty++;s.on=true;rItems(catId);});
+    qw.appendChild(bm);qw.appendChild(qn);qw.appendChild(bp);
+    row.appendChild(ck);row.appendChild(cnt);row.appendChild(qw);el.appendChild(row);
+  });
+}
+function rAllItems(){Object.keys(getCats()).forEach(rItems);}
+function setInst(v){inst=v;document.getElementById('t_avec').classList.toggle('on',v==='avec');document.getElementById('t_sans').classList.toggle('on',v==='sans');}
+
+// ══ NUMEROS DE SERIE ══
+function openSNModal(itemId,itemName){
+  snItemId=itemId;
+  snTempSel=S[itemId]&&S[itemId].sns?[...S[itemId].sns]:[];
+  document.getElementById('snModalTitle').textContent='SN — '+itemName;
+  document.getElementById('sn-new').value='';
+  rSNList();
+  document.getElementById('snModal').classList.add('open');
+}
+
+function rSNList(){
+  const cats=getCats();
+  let item=null;
+  Object.values(cats).flat().forEach(it=>{if(it.id===snItemId)item=it;});
+  const allSNs=item&&item.sns?item.sns:[];
+  const el=document.getElementById('sn-list');
+  el.innerHTML='';
+  if(!allSNs.length){el.innerHTML='<div style="font-size:12px;color:var(--text3);padding:8px;text-align:center">Aucun SN — ajoutez-en ci-dessous</div>';return;}
+  allSNs.forEach(sn=>{
+    const sel=snTempSel.includes(sn);
+    const d=document.createElement('div');d.className='sn-item'+(sel?' on':'');
+    d.innerHTML=`<div class="sn-ck"></div><div style="font-size:13px;font-weight:600">${sn}</div>`;
+    d.addEventListener('click',()=>{
+      if(snTempSel.includes(sn))snTempSel=snTempSel.filter(x=>x!==sn);
+      else snTempSel.push(sn);
+      rSNList();
+    });
+    el.appendChild(d);
+  });
+}
+
+function addSNFromModal(){
+  const val=document.getElementById('sn-new').value.trim();
+  if(!val)return;
+  // Ajouter au catalogue
+  const cats=getCats();
+  Object.values(cats).flat().forEach(it=>{
+    if(it.id===snItemId){if(!it.sns)it.sns=[];if(!it.sns.includes(val))it.sns.push(val);}
+  });
+  setCats(cats);
+  snTempSel.push(val);
+  document.getElementById('sn-new').value='';
+  rSNList();
+}
+
+function confirmSN(){
+  if(!S[snItemId])return;
+  S[snItemId].sns=[...snTempSel];
+  closeM('snModal');
+  // Re-render la catégorie concernée
+  Object.keys(getCats()).forEach(catId=>{
+    if((getCats()[catId]||[]).find(i=>i.id===snItemId))rItems(catId);
+  });
+}
+
+// ══ ANOMALIES ══
+function addAnomalie(){document.getElementById('photo-input').click();}
+
+function handlePhoto(input){
+  if(!input.files||!input.files[0])return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    pendingPhoto=e.target.result;
+    document.getElementById('anom-txt').value='';
+    document.getElementById('anomModal').classList.add('open');
+  };
+  reader.readAsDataURL(input.files[0]);
+  input.value='';
+}
+
+function confirmAnomalie(){
+  if(!pendingPhoto)return;
+  anomalies.push({photo:pendingPhoto,desc:document.getElementById('anom-txt').value.trim()});
+  pendingPhoto=null;
+  closeM('anomModal');
+  rAnomalies();
+}
+
+function rAnomalies(){
+  const el=document.getElementById('anomalies-list');el.innerHTML='';
+  anomalies.forEach((a,i)=>{
+    const d=document.createElement('div');d.className='anomalie-item';
+    d.innerHTML=`<img class="anomalie-img" src="${a.photo}"><div style="font-size:13px;color:var(--text)">${a.desc||'Sans description'}</div><button class="anomalie-del" onclick="delAnomalie(${i})">✕</button>`;
+    el.appendChild(d);
+  });
+}
+function delAnomalie(i){anomalies.splice(i,1);rAnomalies();}
+
+// ══ TEST MATERIEL ══
+function setTest(v){
+  testMode=v;
+  document.getElementById('test-ok').className='test-btn'+(v==='ok'?' on-ok':'');
+  document.getElementById('test-no').className='test-btn'+(v==='no'?' on-no':'');
+}
+
+// ══ SIGNATURE ══
+const sigC=document.getElementById('sigC'),sigX=sigC.getContext('2d');
+let draw=false,hasSig=false;
+function initSig(){const w=sigC.parentElement.clientWidth||300,dpr=window.devicePixelRatio||1;sigC.width=w*dpr;sigC.height=140*dpr;sigC.style.width=w+'px';sigC.style.height='140px';sigX.setTransform(dpr,0,0,dpr,0,0);sigX.strokeStyle='#111';sigX.lineWidth=2.5;sigX.lineCap='round';sigX.lineJoin='round';}
+setTimeout(initSig,200);window.addEventListener('resize',initSig);
+function gp(e){const r=sigC.getBoundingClientRect(),t=e.touches?e.touches[0]:e;return{x:t.clientX-r.left,y:t.clientY-r.top};}
+sigC.addEventListener('mousedown',e=>{draw=true;const p=gp(e);sigX.beginPath();sigX.moveTo(p.x,p.y);});
+sigC.addEventListener('mousemove',e=>{if(!draw)return;const p=gp(e);sigX.lineTo(p.x,p.y);sigX.stroke();mkSig();});
+sigC.addEventListener('mouseup',()=>draw=false);
+sigC.addEventListener('touchstart',e=>{e.preventDefault();draw=true;const p=gp(e);sigX.beginPath();sigX.moveTo(p.x,p.y);},{passive:false});
+sigC.addEventListener('touchmove',e=>{e.preventDefault();if(!draw)return;const p=gp(e);sigX.lineTo(p.x,p.y);sigX.stroke();mkSig();},{passive:false});
+sigC.addEventListener('touchend',()=>draw=false);
+function mkSig(){hasSig=true;document.getElementById('sigH').style.display='none';document.getElementById('sigW').classList.add('on');}
+function clrSig(){sigX.clearRect(0,0,sigC.width,sigC.height);hasSig=false;document.getElementById('sigH').style.display='';document.getElementById('sigW').classList.remove('on');}
+
+// ══ CLIENTS ══
+function rClients(){
+  const clients=getClients(),el=document.getElementById('clients-list');
+  el.innerHTML='';
+  if(!clients.length){el.innerHTML='<div class="empty"><div class="ei">👥</div><div class="et">Aucun client</div><div class="es">Appuyez sur + Nouveau<br>pour ajouter votre premier client.</div></div>';return;}
+  [...clients].reverse().forEach(c=>{
+    const d=document.createElement('div');d.className='lcard';
+    d.innerHTML=`<div class="ltop"><div class="lnom">${c.nom} ${c.pre}</div></div><div class="lmeta"><span>✉️ ${c.email||'—'}</span><span>📞 ${c.tel||'—'}</span><span>📍 ${c.adr||'—'}</span><span>N° Devis: ${c.dev||'—'}</span></div><div class="lact"><button class="lb lb-ok" onclick="event.stopPropagation();editC('${c.id}')">Modifier</button><button class="lb lb-del" onclick="event.stopPropagation();askDel('client','${c.id}')">Suppr</button></div>`;
+    el.appendChild(d);
+  });
+}
+function openClientForm(id){
+  cId=id||null;
+  ['c_nom','c_pre','c_adr','c_email','c_tel','c_dev'].forEach(i=>{const e=document.getElementById(i);if(e)e.value='';});
+  if(id){const c=getClients().find(x=>x.id===id);if(c){document.getElementById('c_nom').value=c.nom||'';document.getElementById('c_pre').value=c.pre||'';document.getElementById('c_adr').value=c.adr||'';document.getElementById('c_email').value=c.email||'';document.getElementById('c_tel').value=c.tel||'';document.getElementById('c_dev').value=c.dev||'';}}
+  showSc('sc-client-form');setHdr('clients',id?'Modifier client':'Nouveau client');
+}
+function editC(id){openClientForm(id);}
+function saveClient(){
+  const data={nom:document.getElementById('c_nom').value.trim(),pre:document.getElementById('c_pre').value.trim(),adr:document.getElementById('c_adr').value.trim(),email:document.getElementById('c_email').value.trim(),tel:document.getElementById('c_tel').value.trim(),dev:document.getElementById('c_dev').value.trim()};
+  if(!data.nom){toast('Nom requis',true);return;}
+  const clients=getClients();
+  if(cId){const i=clients.findIndex(c=>c.id===cId);if(i>=0)clients[i]={...clients[i],...data,updatedAt:Date.now()};}
+  else{clients.push({id:'c_'+Date.now(),createdAt:Date.now(),...data});}
+  setClients(clients);
+  toast('Client enregistre !',false,true);
+  goTab('clients');
+}
+
+// ══ CATALOGUE ══
+function rCat(){
+  const cats=getCats(),el=document.getElementById('cat-list');el.innerHTML='';
+  Object.entries(cats).forEach(([catId,items])=>{
+    const sh=document.createElement('div');sh.className='sh';sh.textContent=CATS_LABELS[catId]||catId;el.appendChild(sh);
+    if(!items.length){const e=document.createElement('div');e.style.cssText='font-size:12px;color:var(--text3);padding:6px 0 10px;font-style:italic';e.textContent='Aucun produit';el.appendChild(e);return;}
+    const card=document.createElement('div');card.className='card';
+    items.forEach((it,idx)=>{
+      const row=document.createElement('div');
+      row.style.cssText='display:flex;justify-content:space-between;align-items:flex-start;padding:8px 0;border-bottom:1px solid var(--border);';
+      if(idx===items.length-1)row.style.borderBottom='none';
+      const nm=document.createElement('div');nm.style.cssText='font-size:13px;flex:1;min-width:0;';
+      nm.innerHTML=`<div style="color:var(--text);font-weight:600">${it.name}</div>${it.acc.length?'<div style="font-size:11px;color:var(--text3);margin-top:2px">Acc: '+it.acc.join(', ')+'</div>':''}${it.sns&&it.sns.length?'<div style="font-size:11px;color:var(--blue);margin-top:2px">SN: '+it.sns.join(', ')+'</div>':''}`;
+      const del=document.createElement('button');del.className='lb lb-del';del.style.cssText='flex:0;padding:6px 10px;white-space:nowrap;margin-left:8px;';del.textContent='Suppr';
+      del.addEventListener('click',()=>askDel('prod',it.id,catId));
+      row.appendChild(nm);row.appendChild(del);card.appendChild(row);
+    });
+    el.appendChild(card);
+  });
+}
+function openProdForm(){
+  ['p_nom','p_acc','p_sns'].forEach(i=>{const e=document.getElementById(i);if(e)e.value='';});
+  showSc('sc-prod-form');setHdr('catalogue','Nouveau produit');
+}
+function saveProd(){
+  const nom=document.getElementById('p_nom').value.trim();
+  if(!nom){toast('Nom requis',true);return;}
+  const catId=document.getElementById('p_cat').value;
+  const acc=document.getElementById('p_acc').value.trim()?document.getElementById('p_acc').value.trim().split(',').map(a=>a.trim()).filter(Boolean):[];
+  const snsRaw=document.getElementById('p_sns').value.trim();
+  const sns=snsRaw?snsRaw.split('\n').map(s=>s.trim()).filter(Boolean):[];
+  const cats=getCats();
+  const newIt={id:'p_'+Date.now(),name:nom,acc,sns};
+  if(!cats[catId])cats[catId]=[];
+  cats[catId].push(newIt);
+  setCats(cats);
+  S[newIt.id]={on:false,qty:0,acc:{},sns:[]};
+  acc.forEach(a=>{S[newIt.id].acc[a]=false;});
+  toast('Produit ajoute !',false,true);
+  goTab('catalogue');
+}
+
+// ══ SUPPRESSION ══
+function askDel(type,id,cat){delType=type;delId=id;delCat=cat||null;document.getElementById('delModal').classList.add('open');}
+function confirmDel(){
+  if(delType==='fiche'){setFiches(getFiches().filter(f=>f.id!==delId));rFiches();}
+  if(delType==='client'){setClients(getClients().filter(c=>c.id!==delId));rClients();}
+  if(delType==='prod'&&delCat){const cats=getCats();cats[delCat]=(cats[delCat]||[]).filter(i=>i.id!==delId);setCats(cats);rCat();}
+  closeM('delModal');toast('Supprime');
+}
+function closeM(id){document.getElementById(id).classList.remove('open');}
+
+// ══ EMAIL ══
+function openEmailForFiche(id){emailFicheId=id;document.getElementById('m_email').value='';document.getElementById('emailModal').classList.add('open');}
+
+async function doEmail(){
   const email=document.getElementById('m_email').value.trim();
   if(!email.includes('@')){toast('Email invalide',true);return;}
-  closeModal('emailModal');showLoad('Generation...');
-  try{const f=emailFicheId?getFiche(emailFicheId):readFields();if(!f)return;openPDF(buildPDF(f),f);}
-  catch(e){toast('Erreur: '+e.message,true);}finally{hideLoad();}
+  closeM('emailModal');
+  const f=getFiches().find(x=>x.id===emailFicheId);if(!f)return;
+  showL('Generation PDF...');
+  try{
+    const doc=buildPDF(f);
+    const blob=doc.output('blob');
+    const nom=f.nom||'client';
+    const dev=f.devis||'000';
+    const subject=`Fiche de sortie LS34 - ${nom} N°${dev}`;
+    const body=`Bonjour ${nom},\n\nVeuillez trouver ci-joint la check list du materiel pour votre location.\n\nCordialement,\nLS34 Locsonodj34\n06.31.71.36.85\ncontact@locsonodj34.fr`;
+    // Partage natif iOS/Android avec PDF
+    if(navigator.canShare&&navigator.canShare({files:[new File([blob],'test.pdf',{type:'application/pdf'})]})){
+      const file=new File([blob],`LS34_${nom}_${dev}.pdf`,{type:'application/pdf'});
+      await navigator.share({files:[file],title:subject,text:body});
+      toast('Partage ok !',false,true);
+    } else {
+      // Fallback mailto
+      const mailtoLink=`mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+      window.open(mailtoLink,'_blank');
+      // Telecharger le PDF aussi
+      const url=URL.createObjectURL(blob);
+      const a=document.createElement('a');a.href=url;a.download=`LS34_${nom}_${dev}.pdf`;document.body.appendChild(a);a.click();setTimeout(()=>{document.body.removeChild(a);URL.revokeObjectURL(url);},500);
+      toast('Email + PDF ok !',false,true);
+    }
+  }catch(e){console.error(e);toast('Erreur: '+e.message,true);}
+  finally{hideL();}
 }
+
+// ══ PDF ══
 function buildPDF(f){
   const{jsPDF}=window.jspdf;
   const W=210,H=297,ML=11,PW=188;
   const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
-  const BG=[13,13,13],GR=[26,26,26],MI=[42,42,42],BO=[51,51,51];
-  const CY=[0,229,255],GO=[201,168,76],WH=[240,240,240],DI=[120,120,120];
-  let y=0,page=1;
+
+  // Couleurs thème app (blanc/bleu/doré)
+  const BG=[255,255,255];
+  const BG2=[245,245,245];
+  const BG3=[238,238,238];
+  const BLUE=[0,85,204];
+  const GOLD=[139,105,20];
+  const TEXT=[17,17,17];
+  const TEXT2=[85,85,85];
+  const TEXT3=[136,136,136];
+  const BORDER=[221,221,221];
+  const GREEN=[0,102,0];
+  const RED=[204,0,0];
+
+  let y=0,pg=1;
   const F=(...c)=>doc.setFillColor(...c);
   const D=(...c)=>doc.setDrawColor(...c);
   const T=(...c)=>doc.setTextColor(...c);
   const B=s=>{doc.setFont('helvetica','bold');doc.setFontSize(s);};
   const N=s=>{doc.setFont('helvetica','normal');doc.setFontSize(s);};
-  function footer(){F(...BG);doc.rect(0,H-8,W,8,'F');T(...DI);N(6.5);doc.text('LS34 Locsonodj34 - locsonodj34.fr - 06.31.71.36.85 - En cas de produit endommage, facture au prix du neuf',W/2,H-3,{align:'center'});doc.text('Page '+page,W-ML,H-3,{align:'right'});}
-  function np(){footer();doc.addPage();page++;F(...BG);doc.rect(0,0,W,H,'F');y=10;}
-  function chk(n){if(y+n>H-12)np();}
+
+  const footer=()=>{
+    F(...BG2);doc.rect(0,H-8,W,8,'F');
+    D(...BORDER);doc.setLineWidth(0.3);doc.line(0,H-8,W,H-8);
+    T(...TEXT3);N(6.5);
+    doc.text('LS34 Locsonodj34 - locsonodj34.fr - 06.31.71.36.85 - Avenue de Poussan, 34770 Gigean',W/2,H-3,{align:'center'});
+    doc.text('Page '+pg,W-ML,H-3,{align:'right'});
+  };
+  const np=()=>{footer();doc.addPage();pg++;F(...BG);doc.rect(0,0,W,H,'F');y=10;};
+  const chk=n=>{if(y+n>H-12)np();};
+
+  // Fond blanc
   F(...BG);doc.rect(0,0,W,H,'F');
-  F(...GR);doc.rect(0,0,W,26,'F');
-  F(...CY);doc.rect(0,26,W,1,'F');
-  T(...CY);B(18);doc.text('LS34',ML,11);
-  T(...WH);B(9);doc.text('LOCSONODJ34',ML+18,11);
-  T(...WH);B(13);doc.text('FICHE DE SORTIE',W/2,10,{align:'center'});
-  T(...CY);N(7.5);doc.text('Location materiel sonorisation / eclairage',W/2,16,{align:'center'});
-  T(...GO);N(6.5);doc.text('Avenue de Poussan - 34770 Gigean',W-ML,10,{align:'right'});
+
+  // ── EN-TETE ──
+  F(...BG);doc.rect(0,0,W,28,'F');
+  D(...BLUE);doc.setLineWidth(1);doc.line(0,28,W,28);
+
+  // Logo LS34
+  T(...TEXT);B(20);doc.text('LS',ML,18);
+  T(...BLUE);B(20);doc.text('34',ML+12,18);
+
+  // Titre centre
+  T(...TEXT);B(14);doc.text('FICHE DE SORTIE',W/2,12,{align:'center'});
+  T(...TEXT2);N(7.5);doc.text('Location materiel sonorisation / eclairage',W/2,19,{align:'center'});
+
+  // Coordonnées droite
+  T(...GOLD);N(6.5);
+  doc.text('Avenue de Poussan - 34770 Gigean',W-ML,10,{align:'right'});
   doc.text('06.31.71.36.85 - contact@locsonodj34.fr',W-ML,16,{align:'right'});
-  T(...DI);N(6);doc.text('SIRET 93392061300017',ML,21);
-  y=32;
-  const _nom=String(f.nom||'-').substring(0,28);
-  const _devis=String(f.devis||'-');
-  const _lieu=String(f.lieu||'-').substring(0,28);
-  const _date=String(f.date||'-');
-  const _a=String(f.acompte||'-');
-  const _c=String(f.caution||'-');
-  const _s=String(f.solde||'-');
-  const _inst=f.installMode==='avec'?'Avec installation':'Sans installation';
-  F(...GR);doc.rect(ML,y,PW,34,'F');
-  D(...BO);doc.setLineWidth(0.3);doc.rect(ML,y,PW,34,'S');
-  F(...MI);doc.rect(ML,y,PW,7,'F');
-  F(...CY);doc.rect(ML,y,2.5,7,'F');
-  T(...CY);B(7.5);doc.text('INFORMATIONS CLIENT',ML+5,y+4.8);
-  T(...GO);N(7);doc.text(_inst,W-ML-3,y+4.8,{align:'right'});
-  N(7.5);T(...DI);
-  doc.text('Nom :',ML+4,y+13);doc.text('Devis :',ML+90,y+13);
-  doc.text('Lieu :',ML+4,y+20);doc.text('Date :',ML+90,y+20);
-  B(8);T(...WH);
-  doc.text(_nom,ML+16,y+13);doc.text(_devis,ML+105,y+13);
-  doc.text(_lieu,ML+16,y+20);doc.text(_date,ML+100,y+20);
-  D(...BO);doc.setLineWidth(0.2);doc.line(ML+3,y+23,ML+PW-3,y+23);
-  N(7.5);T(...DI);
-  doc.text('Acompte :',ML+4,y+29);T(...WH);B(8);doc.text(_a+' EUR',ML+23,y+29);
-  T(...DI);N(7.5);doc.text('Caution :',ML+70,y+29);T(...WH);B(8);doc.text(_c+' EUR',ML+88,y+29);
-  T(...DI);N(7.5);doc.text('Solde :',ML+125,y+29);T(...WH);B(8);doc.text(_s+' EUR',ML+140,y+29);
-  y+=39;
-  function secHead(label){chk(12);F(...MI);doc.rect(ML,y,PW,8,'F');F(...GO);doc.rect(ML,y,2.5,8,'F');T(...WH);B(8.5);doc.text(label,ML+6,y+5.5);y+=11;}
-  function drawItem(item){
-    const s=(f.state||{})[item.id];
-    if(!s||(!s.on&&!(s.qty>0)))return;
-    const accOn=Object.entries(s.acc||{}).filter(([,v])=>v).map(([k])=>String(k));
-    const lh=7.5+(accOn.length?5:0);
-    chk(lh+2);
-    F(22,22,22);doc.rect(ML,y-0.5,PW,lh,'F');
-    D(...BO);doc.setLineWidth(0.15);doc.line(ML,y+lh-0.5,ML+PW,y+lh-0.5);
-    F(...CY);doc.rect(ML+2,y+1,4.5,4.5,'F');
-    T(0,0,0);B(7);doc.text('OK',ML+2.5,y+4.8);
-    const nm=String(item.name||'').substring(0,68);
-    N(7.5);T(...WH);doc.text(nm,ML+9,y+4.8);
-    const qty='x'+String(s.qty>0?s.qty:1);
-    F(...CY);doc.roundedRect(W-ML-13,y+0.8,12,4.8,1,1,'F');
-    T(0,0,0);B(7);doc.text(qty,W-ML-7,y+4.8,{align:'center'});
-    y+=7.5;
-    if(accOn.length){chk(5);T(...CY);N(6.5);doc.text('> '+accOn.join(' - '),ML+9,y+3);y+=5;}
-  }
-  const secs=[
-    {l:'Sonorisation - Materiel audio',c:'list_enceintes'},
-    {l:'Sonorisation - Materiel mixage',c:'list_mixage'},
-    {l:'Sonorisation - Micro',c:'list_micro'},
-    {l:'Eclairage - Jeu de lumiere',c:'list_lumiere'},
-    {l:'Eclairage - Machine a effet',c:'list_effet'},
-    {l:'Accessoires',c:'list_accessoires'},
-    {l:'Cablage Audio',c:'list_cable_audio'},
-    {l:'Cablage Electrique',c:'list_cable_elec'}
-  ];
-  let any=false;
-  secs.forEach(sec=>{
-    const sel=CATS[sec.c].filter(i=>{const s=(f.state||{})[i.id];return s&&(s.on||s.qty>0);});
-    if(!sel.length)return;any=true;secHead(sec.l);sel.forEach(drawItem);y+=3;
+  T(...TEXT3);N(6);doc.text('SIRET 93392061300017',W-ML,22,{align:'right'});
+
+  y=34;
+
+  // ── BLOC CLIENT ──
+  const n=String(f.nom||'-').substring(0,28),dv=String(f.devis||'-'),li=String(f.lieu||'-').substring(0,28),dt=String(f.date||'-'),ac=String(f.acompte||'-'),ca=String(f.caution||'-'),so=String(f.solde||'-'),it=f.installMode==='avec'?'Avec installation':'Sans installation';
+
+  F(...BG2);doc.rect(ML,y,PW,36,'F');D(...BORDER);doc.setLineWidth(0.4);doc.rect(ML,y,PW,36,'S');
+  // Bandeau titre
+  F(...BLUE);doc.rect(ML,y,PW,7,'F');
+  D(...BLUE);doc.rect(ML,y,2,7,'F');
+  T(255,255,255);B(7.5);doc.text('INFORMATIONS CLIENT',ML+5,y+4.8);
+  T(255,255,255);N(7);doc.text(it,W-ML-3,y+4.8,{align:'right'});
+
+  N(7.5);T(...TEXT2);
+  doc.text('Nom :',ML+4,y+14);doc.text('Devis :',ML+95,y+14);
+  doc.text('Lieu :',ML+4,y+21);doc.text('Date :',ML+95,y+21);
+  B(8);T(...TEXT);
+  doc.text(n,ML+16,y+14);doc.text(dv,ML+110,y+14);
+  doc.text(li,ML+16,y+21);doc.text(dt,ML+105,y+21);
+
+  D(...BORDER);doc.setLineWidth(0.3);doc.line(ML+3,y+25,ML+PW-3,y+25);
+
+  N(7.5);T(...TEXT2);
+  doc.text('Acompte :',ML+4,y+31);T(...TEXT);B(8);doc.text(ac+' EUR',ML+23,y+31);
+  T(...TEXT2);N(7.5);doc.text('Caution :',ML+70,y+31);T(...TEXT);B(8);doc.text(ca+' EUR',ML+88,y+31);
+  T(...TEXT2);N(7.5);doc.text('Solde :',ML+130,y+31);T(...TEXT);B(8);doc.text(so+' EUR',ML+145,y+31);
+
+  y+=42;
+
+  // ── ARTICLES ──
+  const cats=getCats();
+  [{l:'Sonorisation - Audio',c:'list_enceintes'},{l:'Sonorisation - Mixage',c:'list_mixage'},{l:'Sonorisation - Micro',c:'list_micro'},{l:'Eclairage - Lumiere',c:'list_lumiere'},{l:'Eclairage - Effet',c:'list_effet'},{l:'Accessoires',c:'list_accessoires'},{l:'Cable Audio',c:'list_cable_audio'},{l:'Cable Electrique',c:'list_cable_elec'},{l:'Image',c:'list_image'}].forEach(sec=>{
+    const items=(cats[sec.c]||[]).filter(i=>{const s=(f.state||{})[i.id];return s&&(s.on||s.qty>0);});
+    if(!items.length)return;
+
+    // Entête section
+    chk(14);
+    F(...BLUE);doc.rect(ML,y,PW,8,'F');
+    F(...GOLD);doc.rect(ML,y,2.5,8,'F');
+    T(255,255,255);B(8.5);doc.text(sec.l.toUpperCase(),ML+6,y+5.5);
+    y+=11;
+
+    // Articles
+    items.forEach(item=>{
+      const s=(f.state||{})[item.id];
+      const aOn=Object.entries(s.acc||{}).filter(([,v])=>v).map(([k])=>String(k));
+      const snSel=s.sns&&s.sns.length?s.sns:[];
+      const extraLines=(aOn.length?1:0)+(snSel.length?1:0);
+      const lh=8+(extraLines*5);
+      chk(lh+2);
+
+      // Fond alternance
+      F(...BG2);doc.rect(ML,y-0.5,PW,lh,'F');
+      D(...BORDER);doc.setLineWidth(0.2);doc.line(ML,y+lh-0.5,ML+PW,y+lh-0.5);
+
+      // Checkbox
+      F(...BLUE);doc.rect(ML+2,y+1.5,4.5,4.5,'F');
+      T(255,255,255);B(7);doc.text('OK',ML+2.5,y+5);
+
+      // Nom produit
+      const nm=String(item.name||'').substring(0,66);
+      N(8);T(...TEXT);doc.text(nm,ML+9,y+5);
+
+      // Quantite
+      F(...BLUE);doc.roundedRect(W-ML-14,y+1,13,5,1,1,'F');
+      T(255,255,255);B(7.5);doc.text('x'+String(s.qty>0?s.qty:1),W-ML-7.5,y+5,{align:'center'});
+
+      y+=8;
+
+      // Accessoires
+      if(aOn.length){chk(5);T(...TEXT2);N(6.5);doc.text('  Acc: '+aOn.join(' - '),ML+9,y+3);y+=5;}
+
+      // Numéros de série
+      if(snSel.length){chk(5);T(...BLUE);N(6.5);doc.text('  SN: '+snSel.join(' | '),ML+9,y+3);y+=5;}
+    });
+    y+=4;
   });
-  if(!any){chk(20);T(...DI);N(9);doc.text('Aucun article selectionne.',W/2,y+10,{align:'center'});y+=20;}
+
+  // ── ANOMALIES ──
+  if(f.anomalies&&f.anomalies.length){
+    chk(20);
+    F(...BG2);doc.rect(ML,y,PW,8,'F');
+    D(...RED);doc.rect(ML,y,2.5,8,'F');
+    T(...RED);B(8.5);doc.text('ANOMALIES CONSTATEES',ML+6,y+5.5);
+    y+=11;
+    f.anomalies.forEach(a=>{
+      // Photo
+      const imgH=45;chk(imgH+12);
+      try{
+        doc.addImage(a.photo,'JPEG',ML,y,60,imgH);
+      }catch(e){}
+      // Description
+      T(...TEXT);N(8);
+      const lines=doc.splitTextToSize(a.desc||'Sans description',PW-68);
+      lines.slice(0,4).forEach((l,i)=>doc.text(String(l),ML+64,y+8+(i*6)));
+      y+=imgH+6;
+    });
+  }
+
+  // ── COMMENTAIRE ──
   if(f.commentaire){
-    const comm=String(f.commentaire);
-    chk(22);F(...GR);doc.rect(ML,y,PW,18,'F');
-    D(...BO);doc.setLineWidth(0.3);doc.rect(ML,y,PW,18,'S');
-    F(...GO);doc.rect(ML,y,2.5,18,'F');
-    T(...GO);B(7);doc.text('COMMENTAIRE',ML+5,y+5.5);
-    T(...WH);N(7.5);
-    doc.splitTextToSize(comm,PW-10).slice(0,3).forEach((l,i)=>doc.text(String(l),ML+5,y+11+(i*5)));
+    const cm=String(f.commentaire);
+    chk(22);
+    F(...BG2);doc.rect(ML,y,PW,18,'F');D(...BORDER);doc.setLineWidth(0.3);doc.rect(ML,y,PW,18,'S');
+    F(...GOLD);doc.rect(ML,y,2.5,18,'F');
+    T(...GOLD);B(7);doc.text('COMMENTAIRE',ML+5,y+5.5);
+    T(...TEXT);N(7.5);doc.splitTextToSize(cm,PW-10).slice(0,3).forEach((l,i)=>doc.text(String(l),ML+5,y+11+(i*5)));
     y+=22;
   }
-  chk(48);y+=3;
-  F(...GR);doc.rect(ML,y,PW,42,'F');
-  D(...BO);doc.setLineWidth(0.3);doc.rect(ML,y,PW,42,'S');
-  F(...MI);doc.rect(ML,y,PW,7,'F');
-  F(...CY);doc.rect(ML,y,2.5,7,'F');
-  T(...CY);B(7.5);doc.text('SIGNATURE CLIENT',ML+5,y+4.8);
-  F(255,255,255);doc.rect(ML+3,y+9,90,28,'F');
-  D(...BO);doc.setLineWidth(0.3);doc.rect(ML+3,y+9,90,28,'S');
-  if(f.signature){doc.addImage(f.signature,'PNG',ML+3,y+9,90,28);}
-  else{T(180,180,180);N(7);doc.text('Signature du client',ML+48,y+25,{align:'center'});}
-  N(7);T(...DI);
-  doc.text('Lu et approuve',ML+100,y+16);
-  doc.text('Bon pour accord',ML+100,y+22);
-  doc.text('Date : _______________',ML+100,y+30);
-  N(6.5);T(...GO);doc.text('LS34 Locsonodj34',ML+100,y+38);
+
+  // ── TEST MATERIEL ──
+  if(f.testMode){
+    chk(14);
+    const isOk=f.testMode==='ok';
+    F(isOk?230:255,isOk?245:230,isOk?230:230);
+    doc.rect(ML,y,PW,10,'F');
+    D(...(isOk?GREEN:RED));doc.setLineWidth(0.5);doc.rect(ML,y,PW,10,'S');
+    T(...(isOk?GREEN:RED));B(9);
+    doc.text(isOk?'✓  MATERIEL TESTE AVEC LE CLIENT':'⚠  MATERIEL NON TESTE AVEC LE CLIENT',W/2,y+6.5,{align:'center'});
+    y+=14;
+  }
+
+  // ── SIGNATURE ──
+  chk(42);y+=3;
+  F(...BG2);doc.rect(ML,y,PW,38,'F');D(...BORDER);doc.setLineWidth(0.4);doc.rect(ML,y,PW,38,'S');
+
+  // Bandeau titre signature
+  F(...BLUE);doc.rect(ML,y,PW,7,'F');
+  T(255,255,255);B(7.5);doc.text('SIGNATURE CLIENT',ML+5,y+4.8);
+
+  // Zone signature
+  F(255,255,255);doc.rect(ML+3,y+9,90,25,'F');
+  D(...BORDER);doc.setLineWidth(0.3);doc.rect(ML+3,y+9,90,25,'S');
+
+  if(f.signature){
+    doc.addImage(f.signature,'PNG',ML+3,y+9,90,25);
+  } else {
+    T(...TEXT3);N(7);doc.text('Signature du client',ML+48,y+23,{align:'center'});
+  }
+
+  // Infos droite
+  T(...TEXT2);N(7);doc.text('LS34 Locsonodj34',ML+100,y+20);
+  T(...TEXT3);N(6.5);doc.text('locsonodj34.fr',ML+100,y+27);
+  doc.text('06.31.71.36.85',ML+100,y+33);
+
+  y+=44;
+
   footer();
   return doc;
 }
 
-function toast(msg,err=false,ok=false){const t=document.getElementById('toast');t.textContent=msg;t.className='toast show'+(err?' err':ok?' ok':'');clearTimeout(t._t);t._t=setTimeout(()=>{t.className='toast';},3500);}
-function showLoad(lbl){document.getElementById('loadLbl').textContent=lbl;document.getElementById('loadOv').classList.add('open');}
-function hideLoad(){document.getElementById('loadOv').classList.remove('open');}
+// ══ UTILS ══
+function toast(msg,err=false,ok=false){const t=document.getElementById('toast');t.textContent=msg;t.className='toast show'+(err?' err':ok?' ok':'');clearTimeout(t._t);t._t=setTimeout(()=>{t.className='toast';},3000);}
+function showL(l){document.getElementById('slbl').textContent=l;document.getElementById('lov').classList.add('open');}
+function hideL(){document.getElementById('lov').classList.remove('open');}
 
-resetState();renderAll();renderHome();
+// ══ INIT ══
+resetS();rAllItems();rFiches();
 </script>
 </body>
-</html>
+  </html>
