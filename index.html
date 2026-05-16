@@ -1,9 +1,8 @@
 <!DOCTYPE html>
-
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="LS34">
@@ -26,163 +25,161 @@
   --cyan:#0055cc;
 }
 html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,sans-serif;font-size:14px;overflow:hidden;}
-.app{display:flex;flex-direction:column;height:100vh;}
+.app{display:flex;flex-direction:column;height:100vh;height:100svh;}
 .screen{display:none;flex:1;flex-direction:column;overflow:hidden;min-height:0;}
 .screen.active{display:flex;}
 
 /* HEADER */
-.hdr{flex-shrink:0;background:var(–bg);border-bottom:2px solid var(–blue);padding:12px 15px;display:flex;align-items:center;gap:10px;}
-.logo{font-size:20px;font-weight:900;letter-spacing:-0.5px;color:var(–text);}
-.logo span{color:var(–blue);}
-.hdr-title{font-size:16px;font-weight:800;flex:1;color:var(–text);}
-.hdr-back{background:none;border:none;color:var(–blue);font-size:26px;cursor:pointer;line-height:1;padding:0 4px;}
-.hdr-btn{background:var(–blue);border:none;border-radius:8px;color:#fff;font-size:12px;font-weight:900;padding:7px 14px;cursor:pointer;}
+.hdr{flex-shrink:0;background:var(--bg);border-bottom:2px solid var(--blue);padding:12px 15px;display:flex;align-items:center;gap:10px;}
+.logo{font-size:20px;font-weight:900;letter-spacing:-0.5px;color:var(--text);}
+.logo span{color:var(--blue);}
+.hdr-title{font-size:16px;font-weight:800;flex:1;color:var(--text);}
+.hdr-back{background:none;border:none;color:var(--blue);font-size:26px;cursor:pointer;line-height:1;padding:0 4px;}
+.hdr-btn{background:var(--blue);border:none;border-radius:8px;color:#fff;font-size:12px;font-weight:900;padding:7px 14px;cursor:pointer;}
 
 /* SCROLL */
 .scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:13px;}
 
 /* BOTTOM NAV */
-.bnav{flex-shrink:0;background:var(–bg);border-top:2px solid var(–border);display:flex;}
-.ntab{flex:1;padding:11px 4px 9px;background:none;border:none;color:var(–text3);cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:11px;font-family:inherit;text-transform:uppercase;letter-spacing:0.5px;font-weight:600;}
-.ntab.on{color:var(–blue);}
+.bnav{flex-shrink:0;background:var(--bg);border-top:2px solid var(--border);display:flex;padding-bottom:max(12px, env(safe-area-inset-bottom));}
+.ntab{flex:1;padding:11px 4px 9px;background:none;border:none;color:var(--text3);cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:11px;font-family:inherit;text-transform:uppercase;letter-spacing:0.5px;font-weight:600;}
+.ntab.on{color:var(--blue);}
 .ntab-icon{font-size:22px;line-height:1;}
 
 /* BOTTOM BAR */
-.bbar{flex-shrink:0;background:var(–bg);border-top:2px solid var(–border);padding:10px 13px;display:flex;gap:9px;}
+.bbar{flex-shrink:0;background:var(--bg);border-top:2px solid var(--border);padding:10px 13px;display:flex;gap:9px;}
 .btn{flex:1;padding:13px;border:none;border-radius:8px;font-size:13px;font-weight:900;cursor:pointer;text-transform:uppercase;letter-spacing:0.5px;}
-.btn-d{background:var(–bg2);border:1px solid var(–border);color:var(–text);}
-.btn-c{background:var(–blue);color:#fff;}
+.btn-d{background:var(--bg2);border:1px solid var(--border);color:var(--text);}
+.btn-c{background:var(--blue);color:#fff;}
 
 /* CARDS */
-.card{background:var(–bg);border:1px solid var(–border);border-radius:10px;padding:14px;margin-bottom:11px;box-shadow:0 1px 3px rgba(0,0,0,0.06);}
-.ctitle{font-size:11px;font-weight:700;color:var(–blue);letter-spacing:2px;text-transform:uppercase;margin-bottom:12px;display:flex;align-items:center;gap:8px;}
-.ctitle::after{content:’’;flex:1;height:1px;background:var(–border);}
+.card{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:11px;box-shadow:0 1px 3px rgba(0,0,0,0.06);}
+.ctitle{font-size:11px;font-weight:700;color:var(--blue);letter-spacing:2px;text-transform:uppercase;margin-bottom:12px;display:flex;align-items:center;gap:8px;}
+.ctitle::after{content:'';flex:1;height:1px;background:var(--border);}
 
 /* FIELDS */
 .g2{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:9px;}
 .g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:9px;}
 .fg{display:flex;flex-direction:column;gap:4px;margin-bottom:9px;}
 .fg:last-child{margin-bottom:0;}
-.fg label{font-size:10px;color:var(–text2);letter-spacing:1px;text-transform:uppercase;}
-.fg input,.fg select,.fg textarea{background:var(–bg2);border:1px solid var(–border);border-radius:7px;color:var(–text);font-size:14px;padding:9px 10px;outline:none;width:100%;font-family:inherit;}
-.fg input:focus,.fg select:focus,.fg textarea:focus{border-color:var(–blue);}
+.fg label{font-size:10px;color:var(--text2);letter-spacing:1px;text-transform:uppercase;}
+.fg input,.fg select,.fg textarea{background:var(--bg2);border:1px solid var(--border);border-radius:7px;color:var(--text);font-size:14px;padding:9px 10px;outline:none;width:100%;font-family:inherit;}
+.fg input:focus,.fg select:focus,.fg textarea:focus{border-color:var(--blue);}
 
 /* TOGGLE */
 .trow{display:flex;gap:7px;}
-.tbtn{flex:1;padding:9px;background:var(–bg2);border:1px solid var(–border);border-radius:7px;color:var(–text2);font-size:11px;cursor:pointer;text-align:center;font-family:inherit;transition:all 0.15s;}
-.tbtn.on{background:rgba(0,85,204,0.08);border-color:var(–blue);color:var(–blue);font-weight:700;}
+.tbtn{flex:1;padding:9px;background:var(--bg2);border:1px solid var(--border);border-radius:7px;color:var(--text2);font-size:11px;cursor:pointer;text-align:center;font-family:inherit;transition:all 0.15s;}
+.tbtn.on{background:rgba(0,85,204,0.08);border-color:var(--blue);color:var(--blue);font-weight:700;}
 
 /* SECTIONS */
-.sh{font-size:13px;font-weight:900;color:var(–text);background:var(–bg2);border-left:3px solid var(–gold);padding:7px 11px;border-radius:0 7px 7px 0;margin-bottom:9px;margin-top:4px;text-transform:uppercase;letter-spacing:1px;}
-.sbh{font-size:10px;color:var(–text3);letter-spacing:2px;text-transform:uppercase;margin:9px 0 7px;padding-bottom:3px;border-bottom:1px solid var(–border);}
+.sh{font-size:13px;font-weight:900;color:var(--text);background:var(--bg2);border-left:3px solid var(--gold);padding:7px 11px;border-radius:0 7px 7px 0;margin-bottom:9px;margin-top:4px;text-transform:uppercase;letter-spacing:1px;}
+.sbh{font-size:10px;color:var(--text3);letter-spacing:2px;text-transform:uppercase;margin:9px 0 7px;padding-bottom:3px;border-bottom:1px solid var(--border);}
 
 /* ITEMS */
-.irow{display:flex;align-items:flex-start;gap:9px;padding:8px 0;border-bottom:1px solid var(–border);}
+.irow{display:flex;align-items:flex-start;gap:9px;padding:8px 0;border-bottom:1px solid var(--border);}
 .irow:last-child{border-bottom:none;}
-.ick{width:22px;height:22px;min-width:22px;background:var(–bg2);border:2px solid var(–border);border-radius:5px;cursor:pointer;display:flex;align-items:center;justify-content:center;margin-top:1px;user-select:none;transition:all 0.15s;}
-.ick.on{background:var(–blue);border-color:var(–blue);}
-.ick.on::after{content:‘✓’;color:#fff;font-size:13px;font-weight:900;}
+.ick{width:22px;height:22px;min-width:22px;background:var(--bg2);border:2px solid var(--border);border-radius:5px;cursor:pointer;display:flex;align-items:center;justify-content:center;margin-top:1px;user-select:none;transition:all 0.15s;}
+.ick.on{background:var(--blue);border-color:var(--blue);}
+.ick.on::after{content:'✓';color:#fff;font-size:13px;font-weight:900;}
 .icnt{flex:1;min-width:0;}
-.iname{font-size:13px;color:var(–text);line-height:1.3;}
-.iname.on{color:var(–blue);font-weight:600;}
+.iname{font-size:13px;color:var(--text);line-height:1.3;}
+.iname.on{color:var(--blue);font-weight:600;}
 .iaccs{display:flex;flex-wrap:wrap;gap:4px;margin-top:5px;}
-.chip{display:flex;align-items:center;gap:3px;background:var(–bg2);border:1px solid var(–border);border-radius:20px;padding:3px 8px 3px 5px;font-size:11px;color:var(–text2);cursor:pointer;user-select:none;transition:all 0.15s;}
-.chip.on{background:rgba(0,85,204,0.08);border-color:var(–blue);color:var(–blue);}
-.cdot{width:7px;height:7px;border-radius:50%;background:var(–border);min-width:7px;transition:background 0.15s;}
-.chip.on .cdot{background:var(–blue);}
+.chip{display:flex;align-items:center;gap:3px;background:var(--bg2);border:1px solid var(--border);border-radius:20px;padding:3px 8px 3px 5px;font-size:11px;color:var(--text2);cursor:pointer;user-select:none;transition:all 0.15s;}
+.chip.on{background:rgba(0,85,204,0.08);border-color:var(--blue);color:var(--blue);}
+.cdot{width:7px;height:7px;border-radius:50%;background:var(--border);min-width:7px;transition:background 0.15s;}
+.chip.on .cdot{background:var(--blue);}
 .iqty{display:flex;align-items:center;gap:5px;}
-.qb{width:28px;height:28px;background:var(–bg2);border:1px solid var(–border);border-radius:5px;color:var(–text);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;user-select:none;}
-.qb:active{border-color:var(–blue);}
-.qv{font-size:15px;min-width:20px;text-align:center;color:var(–text);}
-.qv.on{color:var(–blue);font-weight:700;}
+.qb{width:28px;height:28px;background:var(--bg2);border:1px solid var(--border);border-radius:5px;color:var(--text);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;user-select:none;}
+.qb:active{border-color:var(--blue);}
+.qv{font-size:15px;min-width:20px;text-align:center;color:var(--text);}
+.qv.on{color:var(--blue);font-weight:700;}
 
 /* SN BADGE */
-.sn-badge{display:inline-flex;align-items:center;gap:4px;background:rgba(0,85,204,0.06);border:1px solid rgba(0,85,204,0.2);border-radius:5px;padding:2px 7px;font-size:10px;color:var(–blue);cursor:pointer;margin-top:4px;}
+.sn-badge{display:inline-flex;align-items:center;gap:4px;background:rgba(0,85,204,0.06);border:1px solid rgba(0,85,204,0.2);border-radius:5px;padding:2px 7px;font-size:10px;color:var(--blue);cursor:pointer;margin-top:4px;}
 
 /* SIGNATURE */
-.sigw{background:#fff;border-radius:7px;overflow:hidden;position:relative;border:2px solid var(–border);}
-.sigw.on{border-color:var(–blue);}
+.sigw{background:#fff;border-radius:7px;overflow:hidden;position:relative;border:2px solid var(--border);}
+.sigw.on{border-color:var(--blue);}
 #sigC{display:block;width:100%;height:140px;touch-action:none;cursor:crosshair;}
-.sigh{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:var(–text3);font-size:13px;pointer-events:none;white-space:nowrap;}
-.sigclr{position:absolute;top:7px;right:7px;background:rgba(0,0,0,0.05);border:1px solid var(–border);border-radius:5px;padding:3px 9px;font-size:11px;cursor:pointer;color:var(–text2);}
+.sigh{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:var(--text3);font-size:13px;pointer-events:none;white-space:nowrap;}
+.sigclr{position:absolute;top:7px;right:7px;background:rgba(0,0,0,0.05);border:1px solid var(--border);border-radius:5px;padding:3px 9px;font-size:11px;cursor:pointer;color:var(--text2);}
 
 /* ANOMALIES */
-.anomalie-item{background:var(–bg2);border:1px solid var(–border);border-radius:8px;padding:10px;margin-bottom:8px;position:relative;}
+.anomalie-item{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:10px;margin-bottom:8px;position:relative;}
 .anomalie-img{width:100%;max-height:180px;object-fit:cover;border-radius:5px;margin-bottom:6px;}
-.anomalie-del{position:absolute;top:8px;right:8px;background:rgba(204,0,0,0.1);border:1px solid rgba(204,0,0,0.3);border-radius:5px;padding:3px 8px;font-size:11px;color:var(–red);cursor:pointer;}
-.photo-btn{display:flex;align-items:center;justify-content:center;gap:8px;padding:11px;background:var(–bg2);border:1px dashed var(–border);border-radius:8px;cursor:pointer;color:var(–text2);font-size:13px;width:100%;}
-.photo-btn:active{border-color:var(–blue);color:var(–blue);}
+.anomalie-del{position:absolute;top:8px;right:8px;background:rgba(204,0,0,0.1);border:1px solid rgba(204,0,0,0.3);border-radius:5px;padding:3px 8px;font-size:11px;color:var(--red);cursor:pointer;}
+.photo-btn{display:flex;align-items:center;justify-content:center;gap:8px;padding:11px;background:var(--bg2);border:1px dashed var(--border);border-radius:8px;cursor:pointer;color:var(--text2);font-size:13px;width:100%;}
+.photo-btn:active{border-color:var(--blue);color:var(--blue);}
 
 /* TEST MATERIEL */
 .test-row{display:flex;gap:9px;margin-top:4px;}
-.test-btn{flex:1;display:flex;align-items:center;gap:8px;padding:11px;background:var(–bg2);border:2px solid var(–border);border-radius:8px;cursor:pointer;font-size:13px;color:var(–text2);transition:all 0.15s;}
-.test-btn.on-ok{background:rgba(0,102,0,0.06);border-color:var(–green);color:var(–green);}
-.test-btn.on-no{background:rgba(204,0,0,0.06);border-color:var(–red);color:var(–red);}
+.test-btn{flex:1;display:flex;align-items:center;gap:8px;padding:11px;background:var(--bg2);border:2px solid var(--border);border-radius:8px;cursor:pointer;font-size:13px;color:var(--text2);transition:all 0.15s;}
+.test-btn.on-ok{background:rgba(0,102,0,0.06);border-color:var(--green);color:var(--green);}
+.test-btn.on-no{background:rgba(204,0,0,0.06);border-color:var(--red);color:var(--red);}
 .test-icon{font-size:20px;}
 
 /* LIST CARDS */
-.lcard{background:var(–bg);border:1px solid var(–border);border-radius:10px;padding:13px 14px;margin-bottom:9px;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,0.05);}
-.lcard:active{border-color:var(–blue);}
+.lcard{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:13px 14px;margin-bottom:9px;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,0.05);}
+.lcard:active{border-color:var(--blue);}
 .ltop{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:5px;}
-.lnom{font-size:15px;font-weight:800;color:var(–text);}
-.lbadge{font-size:10px;color:var(–blue);border:1px solid rgba(0,85,204,0.3);padding:2px 7px;border-radius:20px;white-space:nowrap;flex-shrink:0;}
-.lmeta{font-size:12px;color:var(–text2);display:flex;flex-direction:column;gap:2px;margin-bottom:8px;}
+.lnom{font-size:15px;font-weight:800;color:var(--text);}
+.lbadge{font-size:10px;color:var(--blue);border:1px solid rgba(0,85,204,0.3);padding:2px 7px;border-radius:20px;white-space:nowrap;flex-shrink:0;}
+.lmeta{font-size:12px;color:var(--text2);display:flex;flex-direction:column;gap:2px;margin-bottom:8px;}
 .lact{display:flex;gap:6px;}
-.lb{flex:1;padding:8px;border-radius:6px;border:1px solid var(–border);font-size:11px;cursor:pointer;text-align:center;background:var(–bg2);color:var(–text);font-family:inherit;}
-.lb-del{background:rgba(204,0,0,0.05);border-color:rgba(204,0,0,0.2);color:var(–red);}
-.lb-ok{background:rgba(0,85,204,0.05);border-color:rgba(0,85,204,0.2);color:var(–blue);}
+.lb{flex:1;padding:8px;border-radius:6px;border:1px solid var(--border);font-size:11px;cursor:pointer;text-align:center;background:var(--bg2);color:var(--text);font-family:inherit;}
+.lb-del{background:rgba(204,0,0,0.05);border-color:rgba(204,0,0,0.2);color:var(--red);}
+.lb-ok{background:rgba(0,85,204,0.05);border-color:rgba(0,85,204,0.2);color:var(--blue);}
 
 /* EMPTY */
 .empty{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:50vh;gap:12px;text-align:center;padding:20px;}
 .ei{font-size:50px;opacity:0.2;}
-.et{font-size:17px;font-weight:900;color:var(–text3);}
-.es{font-size:12px;color:var(–text3);line-height:1.6;}
+.et{font-size:17px;font-weight:900;color:var(--text3);}
+.es{font-size:12px;color:var(--text3);line-height:1.6;}
 
 /* MODAL */
 .mbg{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:900;align-items:flex-end;justify-content:center;}
 .mbg.open{display:flex;}
-.modal{background:var(–bg);border:1px solid var(–border);border-radius:16px 16px 0 0;padding:20px 17px 24px;width:100%;max-width:560px;box-shadow:0 -4px 20px rgba(0,0,0,0.1);}
-.mh{width:32px;height:4px;background:var(–border);border-radius:2px;margin:0 auto 15px;}
-.modal h2{font-size:16px;color:var(–text);margin-bottom:12px;font-weight:800;}
+.modal{background:var(--bg);border:1px solid var(--border);border-radius:16px 16px 0 0;padding:20px 17px 24px;width:100%;max-width:560px;box-shadow:0 -4px 20px rgba(0,0,0,0.1);}
+.mh{width:32px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 15px;}
+.modal h2{font-size:16px;color:var(--text);margin-bottom:12px;font-weight:800;}
 .mbtns{display:flex;gap:8px;margin-top:13px;}
-.mcancel{flex:1;padding:11px;background:var(–bg2);border:1px solid var(–border);border-radius:7px;color:var(–text2);font-size:12px;cursor:pointer;}
-.mok{flex:2;padding:11px;background:var(–blue);border:none;border-radius:7px;color:#fff;font-size:13px;font-weight:800;cursor:pointer;}
-.mok.red{background:var(–red);}
+.mcancel{flex:1;padding:11px;background:var(--bg2);border:1px solid var(--border);border-radius:7px;color:var(--text2);font-size:12px;cursor:pointer;}
+.mok{flex:2;padding:11px;background:var(--blue);border:none;border-radius:7px;color:#fff;font-size:13px;font-weight:800;cursor:pointer;}
+.mok.red{background:var(--red);}
 
 /* SN MODAL */
 .sn-list{max-height:200px;overflow-y:auto;margin-bottom:10px;}
-.sn-item{display:flex;align-items:center;gap:8px;padding:8px;background:var(–bg2);border:1px solid var(–border);border-radius:6px;margin-bottom:6px;cursor:pointer;}
-.sn-item.on{background:rgba(0,85,204,0.06);border-color:var(–blue);}
-.sn-ck{width:18px;height:18px;border-radius:3px;border:2px solid var(–border);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
-.sn-item.on .sn-ck{background:var(–blue);border-color:var(–blue);}
-.sn-item.on .sn-ck::after{content:‘✓’;color:#fff;font-size:11px;}
+.sn-item{display:flex;align-items:center;gap:8px;padding:8px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;margin-bottom:6px;cursor:pointer;}
+.sn-item.on{background:rgba(0,85,204,0.06);border-color:var(--blue);}
+.sn-ck{width:18px;height:18px;border-radius:3px;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.sn-item.on .sn-ck{background:var(--blue);border-color:var(--blue);}
+.sn-item.on .sn-ck::after{content:'✓';color:#fff;font-size:11px;}
 .sn-add-row{display:flex;gap:7px;margin-top:6px;}
-.sn-add-row input{flex:1;background:var(–bg2);border:1px solid var(–border);border-radius:6px;padding:8px 10px;font-size:13px;outline:none;color:var(–text);}
-.sn-add-row input:focus{border-color:var(–blue);}
-.sn-add-btn{padding:8px 14px;background:var(–blue);border:none;border-radius:6px;color:#fff;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;}
+.sn-add-row input{flex:1;background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:8px 10px;font-size:13px;outline:none;color:var(--text);}
+.sn-add-row input:focus{border-color:var(--blue);}
+.sn-add-btn{padding:8px 14px;background:var(--blue);border:none;border-radius:6px;color:#fff;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;}
 
 /* TOAST */
-.toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:var(–text);color:#fff;font-size:12px;padding:10px 20px;border-radius:30px;z-index:999;opacity:0;transition:opacity 0.25s;white-space:nowrap;pointer-events:none;}
+.toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:var(--text);color:#fff;font-size:12px;padding:10px 20px;border-radius:30px;z-index:999;opacity:0;transition:opacity 0.25s;white-space:nowrap;pointer-events:none;}
 .toast.show{opacity:1;}
-.toast.err{background:var(–red);}
-.toast.ok{background:var(–green);}
+.toast.err{background:var(--red);}
+.toast.ok{background:var(--green);}
 
 /* LOAD */
 .lov{display:none;position:fixed;inset:0;background:rgba(255,255,255,0.85);z-index:800;align-items:center;justify-content:center;flex-direction:column;gap:12px;}
 .lov.open{display:flex;}
-.spin{width:36px;height:36px;border:3px solid var(–border);border-top-color:var(–blue);border-radius:50%;animation:sp 0.8s linear infinite;}
+.spin{width:36px;height:36px;border:3px solid var(--border);border-top-color:var(--blue);border-radius:50%;animation:sp 0.8s linear infinite;}
 @keyframes sp{to{transform:rotate(360deg);}}
-.slbl{font-size:12px;color:var(–text2);}
+.slbl{font-size:12px;color:var(--text2);}
 
 @media(max-width:390px){.g2{grid-template-columns:1fr;}.g3{grid-template-columns:1fr 1fr;}}
 </style>
-
 </head>
 <body>
 <div class="app">
 
 <!-- HEADER -->
-
 <div class="hdr" id="hdr">
   <div class="logo">LS<span>34</span></div>
   <div style="flex:1"></div>
@@ -190,117 +187,113 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
 </div>
 
 <!-- FICHES LIST -->
-
 <div id="sc-fiches" class="screen active">
   <div class="scroll"><div id="fiches-list"></div></div>
 </div>
 
 <!-- FICHE FORM -->
-
 <div id="sc-fiche-form" class="screen">
   <div class="scroll" id="fscroll">
 
-```
-<!-- CLIENT -->
-<div class="card">
-  <div class="ctitle">Client</div>
-  <div class="fg">
-    <label>Client existant</label>
-    <select id="f_csel" onchange="autoFill(this.value)">
-      <option value="">-- Saisie manuelle --</option>
-    </select>
-  </div>
-  <div class="g2">
-    <div class="fg"><label>Nom client</label><input type="text" id="f_nom" placeholder="Dupont Laurent" autocomplete="off"></div>
-    <div class="fg"><label>N Devis</label><input type="text" id="f_devis" placeholder="145" autocomplete="off"></div>
-  </div>
-  <div class="g2">
-    <div class="fg"><label>Lieu</label><input type="text" id="f_lieu" placeholder="Gigean" autocomplete="off"></div>
-    <div class="fg"><label>Date</label><input type="date" id="f_date"></div>
-  </div>
-  <div class="fg">
-    <label>Prestation</label>
-    <div class="trow">
-      <div class="tbtn" id="t_avec" onclick="setInst('avec')">Avec installation</div>
-      <div class="tbtn on" id="t_sans" onclick="setInst('sans')">Sans installation</div>
-    </div>
-  </div>
-  <div class="g3" style="margin-top:8px">
-    <div class="fg"><label>Acompte EUR</label><input type="number" id="f_ac" placeholder="0"></div>
-    <div class="fg"><label>Caution EUR</label><input type="number" id="f_ca" placeholder="0"></div>
-    <div class="fg"><label>Solde EUR</label><input type="number" id="f_so" placeholder="0"></div>
-  </div>
-</div>
-
-<!-- SECTIONS MATERIEL -->
-<div class="sh">Sonorisation</div>
-<div class="card">
-  <div class="sbh">Materiel audio</div><div id="list_enceintes"></div>
-  <div class="sbh">Materiel mixage</div><div id="list_mixage"></div>
-  <div class="sbh">Micro</div><div id="list_micro"></div>
-</div>
-<div class="sh">Eclairage</div>
-<div class="card">
-  <div class="sbh">Jeu de lumiere</div><div id="list_lumiere"></div>
-  <div class="sbh">Machine a effet</div><div id="list_effet"></div>
-</div>
-<div class="sh">Accessoires</div>
-<div class="card"><div id="list_accessoires"></div></div>
-<div class="sh">Cablage</div>
-<div class="card">
-  <div class="sbh">Cable Audio</div><div id="list_cable_audio"></div>
-  <div class="sbh">Cable Electrique</div><div id="list_cable_elec"></div>
-</div>
-<div class="sh">Image</div>
-<div class="card"><div id="list_image"></div></div>
-
-<!-- ANOMALIES -->
-<div class="card">
-  <div class="ctitle">Anomalies constatees</div>
-  <div id="anomalies-list"></div>
-  <button class="photo-btn" onclick="addAnomalie()">
-    📷 Ajouter une photo d'anomalie
-  </button>
-  <input type="file" id="photo-input" accept="image/*" capture="environment" style="display:none" onchange="handlePhoto(this)">
-</div>
-
-<!-- TEST MATERIEL -->
-<div class="card">
-  <div class="ctitle">Test materiel</div>
-  <div class="test-row">
-    <div class="test-btn" id="test-ok" onclick="setTest('ok')">
-      <div class="test-icon">✅</div>
-      <div>
-        <div style="font-weight:700;font-size:13px">Teste avec le client</div>
-        <div style="font-size:11px;opacity:0.7">Materiel verifie</div>
+    <!-- CLIENT -->
+    <div class="card">
+      <div class="ctitle">Client</div>
+      <div class="fg">
+        <label>Client existant</label>
+        <select id="f_csel" onchange="autoFill(this.value)">
+          <option value="">-- Saisie manuelle --</option>
+        </select>
+      </div>
+      <div class="g2">
+        <div class="fg"><label>Nom client</label><input type="text" id="f_nom" placeholder="Dupont Laurent" autocomplete="off"></div>
+        <div class="fg"><label>N Devis</label><input type="text" id="f_devis" placeholder="145" autocomplete="off"></div>
+      </div>
+      <div class="g2">
+        <div class="fg"><label>Lieu</label><input type="text" id="f_lieu" placeholder="Gigean" autocomplete="off"></div>
+        <div class="fg"><label>Date</label><input type="date" id="f_date"></div>
+      </div>
+      <div class="fg">
+        <label>Prestation</label>
+        <div class="trow">
+          <div class="tbtn" id="t_avec" onclick="setInst('avec')">Avec installation</div>
+          <div class="tbtn on" id="t_sans" onclick="setInst('sans')">Sans installation</div>
+        </div>
+      </div>
+      <div class="g3" style="margin-top:8px">
+        <div class="fg"><label>Acompte EUR</label><input type="number" id="f_ac" placeholder="0"></div>
+        <div class="fg"><label>Caution EUR</label><input type="number" id="f_ca" placeholder="0"></div>
+        <div class="fg"><label>Solde EUR</label><input type="number" id="f_so" placeholder="0"></div>
       </div>
     </div>
-    <div class="test-btn" id="test-no" onclick="setTest('no')">
-      <div class="test-icon">⚠️</div>
-      <div>
-        <div style="font-weight:700;font-size:13px">Non teste avec le client</div>
-        <div style="font-size:11px;opacity:0.7">Sans verification</div>
+
+    <!-- SECTIONS MATERIEL -->
+    <div class="sh">Sonorisation</div>
+    <div class="card">
+      <div class="sbh">Materiel audio</div><div id="list_enceintes"></div>
+      <div class="sbh">Materiel mixage</div><div id="list_mixage"></div>
+      <div class="sbh">Micro</div><div id="list_micro"></div>
+    </div>
+    <div class="sh">Eclairage</div>
+    <div class="card">
+      <div class="sbh">Jeu de lumiere</div><div id="list_lumiere"></div>
+      <div class="sbh">Machine a effet</div><div id="list_effet"></div>
+    </div>
+    <div class="sh">Accessoires</div>
+    <div class="card"><div id="list_accessoires"></div></div>
+    <div class="sh">Cablage</div>
+    <div class="card">
+      <div class="sbh">Cable Audio</div><div id="list_cable_audio"></div>
+      <div class="sbh">Cable Electrique</div><div id="list_cable_elec"></div>
+    </div>
+    <div class="sh">Image</div>
+    <div class="card"><div id="list_image"></div></div>
+
+    <!-- ANOMALIES -->
+    <div class="card">
+      <div class="ctitle">Anomalies constatees</div>
+      <div id="anomalies-list"></div>
+      <button class="photo-btn" onclick="addAnomalie()">
+        📷 Ajouter une photo d'anomalie
+      </button>
+      <input type="file" id="photo-input" accept="image/*" capture="environment" style="display:none" onchange="handlePhoto(this)">
+    </div>
+
+    <!-- TEST MATERIEL -->
+    <div class="card">
+      <div class="ctitle">Test materiel</div>
+      <div class="test-row">
+        <div class="test-btn" id="test-ok" onclick="setTest('ok')">
+          <div class="test-icon">✅</div>
+          <div>
+            <div style="font-weight:700;font-size:13px">Teste avec le client</div>
+            <div style="font-size:11px;opacity:0.7">Materiel verifie</div>
+          </div>
+        </div>
+        <div class="test-btn" id="test-no" onclick="setTest('no')">
+          <div class="test-icon">⚠️</div>
+          <div>
+            <div style="font-weight:700;font-size:13px">Non teste avec le client</div>
+            <div style="font-size:11px;opacity:0.7">Sans verification</div>
+          </div>
+        </div>
       </div>
     </div>
-  </div>
-</div>
 
-<!-- COMMENTAIRE -->
-<div class="card">
-  <div class="ctitle">Commentaire</div>
-  <div class="fg"><textarea id="f_com" rows="3" placeholder="Remarques..."></textarea></div>
-</div>
+    <!-- COMMENTAIRE -->
+    <div class="card">
+      <div class="ctitle">Commentaire</div>
+      <div class="fg"><textarea id="f_com" rows="3" placeholder="Remarques..."></textarea></div>
+    </div>
 
-<!-- SIGNATURE -->
-<div class="card">
-  <div class="ctitle">Signature client</div>
-  <div class="sigw" id="sigW">
-    <div class="sigh" id="sigH">Signer ici avec le doigt</div>
-    <canvas id="sigC"></canvas>
-    <button class="sigclr" onclick="clrSig()">Effacer</button>
-  </div>
-</div>
-```
+    <!-- SIGNATURE -->
+    <div class="card">
+      <div class="ctitle">Signature client</div>
+      <div class="sigw" id="sigW">
+        <div class="sigh" id="sigH">Signer ici avec le doigt</div>
+        <canvas id="sigC"></canvas>
+        <button class="sigclr" onclick="clrSig()">Effacer</button>
+      </div>
+    </div>
 
   </div>
   <div class="bbar">
@@ -310,13 +303,11 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
 </div>
 
 <!-- CLIENTS LIST -->
-
 <div id="sc-clients" class="screen">
   <div class="scroll"><div id="clients-list"></div></div>
 </div>
 
 <!-- CLIENT FORM -->
-
 <div id="sc-client-form" class="screen">
   <div class="scroll">
     <div class="card">
@@ -339,13 +330,11 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
 </div>
 
 <!-- CATALOGUE LIST -->
-
 <div id="sc-catalogue" class="screen">
   <div class="scroll"><div id="cat-list"></div></div>
 </div>
 
 <!-- PRODUIT FORM -->
-
 <div id="sc-prod-form" class="screen">
   <div class="scroll">
     <div class="card">
@@ -378,7 +367,6 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
 </div>
 
 <!-- NOUVELLE CATEGORIE FORM -->
-
 <div id="sc-cat-form" class="screen">
   <div class="scroll">
     <div class="card">
@@ -392,7 +380,6 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
 </div>
 
 <!-- NAV BAS -->
-
 <div class="bnav" id="bnav">
   <button class="ntab on" id="nt-fiches" onclick="goTab('fiches')"><div class="ntab-icon">📋</div>Fiches</button>
   <button class="ntab" id="nt-clients" onclick="goTab('clients')"><div class="ntab-icon">👥</div>Clients</button>
@@ -401,7 +388,6 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
 </div>
 
 <!-- MODAL SUPPR -->
-
 <div class="mbg" id="delModal">
   <div class="modal">
     <div class="mh"></div>
@@ -415,7 +401,6 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
 </div>
 
 <!-- MODAL SN -->
-
 <div class="mbg" id="snModal">
   <div class="modal">
     <div class="mh"></div>
@@ -433,7 +418,6 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
 </div>
 
 <!-- MODAL ANOMALIE COMMENTAIRE -->
-
 <div class="mbg" id="anomModal">
   <div class="modal">
     <div class="mh"></div>
@@ -447,7 +431,6 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
 </div>
 
 <!-- MODAL EMAIL -->
-
 <div class="mbg" id="emailModal">
   <div class="modal">
     <div class="mh"></div>
@@ -1261,6 +1244,5 @@ function hideL(){document.getElementById('lov').classList.remove('open');}
 // ══ INIT ══
 resetS();rAllItems();rFiches();
 </script>
-
 </body>
 </html>
