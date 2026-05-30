@@ -2357,7 +2357,7 @@ function generateQRDataURL(text, size) {
   --red:#cc0000;--green:#006600;
 }
 html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,sans-serif;font-size:14px;overflow:hidden;}
-.app{display:flex;flex-direction:column;height:100svh;height:100vh;}
+.app{display:flex;flex-direction:column;height:100dvh;min-height:100vh;}
 .screen{display:none;flex:1;flex-direction:column;overflow:hidden;min-height:0;}
 .screen.active{display:flex;}
 .hdr{flex-shrink:0;background:var(--bg);border-bottom:2px solid var(--blue);padding:12px 15px;display:flex;align-items:center;gap:10px;}
@@ -2367,11 +2367,11 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
 .hdr-back{background:none;border:none;color:var(--blue);font-size:26px;cursor:pointer;line-height:1;padding:0 4px;}
 .hdr-btn{background:var(--blue);border:none;border-radius:8px;color:#fff;font-size:12px;font-weight:900;padding:7px 14px;cursor:pointer;}
 .scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:13px;}
-.bnav{flex-shrink:0;background:var(--bg);border-top:2px solid var(--border);display:flex;padding-bottom:max(10px,env(safe-area-inset-bottom));}
-.ntab{flex:1;padding:11px 4px 9px;background:none;border:none;color:var(--text3);cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:11px;font-family:inherit;text-transform:uppercase;letter-spacing:0.5px;font-weight:600;}
+.bnav{flex-shrink:0;background:var(--bg);border-top:2px solid var(--border);display:flex;padding-bottom:max(20px,env(safe-area-inset-bottom));min-height:70px;}
+.ntab{flex:1;padding:12px 4px 10px;background:none;border:none;color:var(--text3);cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px;font-size:12px;font-family:inherit;text-transform:uppercase;letter-spacing:0.5px;font-weight:700;min-height:60px;}
 .ntab.on{color:var(--blue);}
 .ntab-icon{font-size:22px;line-height:1;}
-.bbar{flex-shrink:0;background:var(--bg);border-top:2px solid var(--border);padding:10px 13px;display:flex;gap:9px;}
+.bbar{flex-shrink:0;background:var(--bg);border-top:2px solid var(--border);padding:10px 13px;padding-bottom:max(14px,env(safe-area-inset-bottom));display:flex;gap:9px;}
 .btn{flex:1;padding:13px;border:none;border-radius:8px;font-size:13px;font-weight:900;cursor:pointer;text-transform:uppercase;}
 .btn-d{background:var(--bg2);border:1px solid var(--border);color:var(--text);}
 .btn-c{background:var(--blue);color:#fff;}
@@ -2586,10 +2586,12 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
       </div>
     </div>
   </div>
-  <div class="bbar">
-    <button class="btn btn-scan" onclick="openScanner()">📷 Scanner</button>
-    <button class="btn btn-d" onclick="saveFiche()">Enregistrer</button>
-    <button class="btn btn-c" onclick="fichePDF()">PDF</button>
+  <div style="flex-shrink:0;background:var(--bg);border-top:2px solid var(--border);padding:8px 13px;padding-bottom:max(14px,env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:7px;">
+    <button class="btn btn-scan" style="width:100%;padding:12px;" onclick="openScanner()">📷 Scanner un produit</button>
+    <div style="display:flex;gap:9px;">
+      <button class="btn btn-d" onclick="saveFiche()">💾 Enregistrer</button>
+      <button class="btn btn-c" onclick="fichePDF()">📄 PDF</button>
+    </div>
   </div>
 </div>
 
@@ -3453,4 +3455,4 @@ if('serviceWorker' in navigator){
 resetS();rAllItems();rFiches();
 </script>
 </body>
-  </html>
+</html>
