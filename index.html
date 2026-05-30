@@ -8,56 +8,2377 @@
 <meta name="apple-mobile-web-app-title" content="LS34">
 <title>LS34 Fiches</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script>
+//---------------------------------------------------------------------
+//
+// QR Code Generator for JavaScript
+//
+// Copyright (c) 2009 Kazuhiko Arase
+//
+// URL: http://www.d-project.com/
+//
+// Licensed under the MIT license:
+//  http://www.opensource.org/licenses/mit-license.php
+//
+// The word 'QR Code' is registered trademark of
+// DENSO WAVE INCORPORATED
+//  http://www.denso-wave.com/qrcode/faqpatent-e.html
+//
+//---------------------------------------------------------------------
+
+var qrcode = function() {
+
+  //---------------------------------------------------------------------
+  // qrcode
+  //---------------------------------------------------------------------
+
+  /**
+   * qrcode
+   * @param typeNumber 1 to 40
+   * @param errorCorrectionLevel 'L','M','Q','H'
+   */
+  var qrcode = function(typeNumber, errorCorrectionLevel) {
+
+    var PAD0 = 0xEC;
+    var PAD1 = 0x11;
+
+    var _typeNumber = typeNumber;
+    var _errorCorrectionLevel = QRErrorCorrectionLevel[errorCorrectionLevel];
+    var _modules = null;
+    var _moduleCount = 0;
+    var _dataCache = null;
+    var _dataList = [];
+
+    var _this = {};
+
+    var makeImpl = function(test, maskPattern) {
+
+      _moduleCount = _typeNumber * 4 + 17;
+      _modules = function(moduleCount) {
+        var modules = new Array(moduleCount);
+        for (var row = 0; row < moduleCount; row += 1) {
+          modules[row] = new Array(moduleCount);
+          for (var col = 0; col < moduleCount; col += 1) {
+            modules[row][col] = null;
+          }
+        }
+        return modules;
+      }(_moduleCount);
+
+      setupPositionProbePattern(0, 0);
+      setupPositionProbePattern(_moduleCount - 7, 0);
+      setupPositionProbePattern(0, _moduleCount - 7);
+      setupPositionAdjustPattern();
+      setupTimingPattern();
+      setupTypeInfo(test, maskPattern);
+
+      if (_typeNumber >= 7) {
+        setupTypeNumber(test);
+      }
+
+      if (_dataCache == null) {
+        _dataCache = createData(_typeNumber, _errorCorrectionLevel, _dataList);
+      }
+
+      mapData(_dataCache, maskPattern);
+    };
+
+    var setupPositionProbePattern = function(row, col) {
+
+      for (var r = -1; r <= 7; r += 1) {
+
+        if (row + r <= -1 || _moduleCount <= row + r) continue;
+
+        for (var c = -1; c <= 7; c += 1) {
+
+          if (col + c <= -1 || _moduleCount <= col + c) continue;
+
+          if ( (0 <= r && r <= 6 && (c == 0 || c == 6) )
+              || (0 <= c && c <= 6 && (r == 0 || r == 6) )
+              || (2 <= r && r <= 4 && 2 <= c && c <= 4) ) {
+            _modules[row + r][col + c] = true;
+          } else {
+            _modules[row + r][col + c] = false;
+          }
+        }
+      }
+    };
+
+    var getBestMaskPattern = function() {
+
+      var minLostPoint = 0;
+      var pattern = 0;
+
+      for (var i = 0; i < 8; i += 1) {
+
+        makeImpl(true, i);
+
+        var lostPoint = QRUtil.getLostPoint(_this);
+
+        if (i == 0 || minLostPoint > lostPoint) {
+          minLostPoint = lostPoint;
+          pattern = i;
+        }
+      }
+
+      return pattern;
+    };
+
+    var setupTimingPattern = function() {
+
+      for (var r = 8; r < _moduleCount - 8; r += 1) {
+        if (_modules[r][6] != null) {
+          continue;
+        }
+        _modules[r][6] = (r % 2 == 0);
+      }
+
+      for (var c = 8; c < _moduleCount - 8; c += 1) {
+        if (_modules[6][c] != null) {
+          continue;
+        }
+        _modules[6][c] = (c % 2 == 0);
+      }
+    };
+
+    var setupPositionAdjustPattern = function() {
+
+      var pos = QRUtil.getPatternPosition(_typeNumber);
+
+      for (var i = 0; i < pos.length; i += 1) {
+
+        for (var j = 0; j < pos.length; j += 1) {
+
+          var row = pos[i];
+          var col = pos[j];
+
+          if (_modules[row][col] != null) {
+            continue;
+          }
+
+          for (var r = -2; r <= 2; r += 1) {
+
+            for (var c = -2; c <= 2; c += 1) {
+
+              if (r == -2 || r == 2 || c == -2 || c == 2
+                  || (r == 0 && c == 0) ) {
+                _modules[row + r][col + c] = true;
+              } else {
+                _modules[row + r][col + c] = false;
+              }
+            }
+          }
+        }
+      }
+    };
+
+    var setupTypeNumber = function(test) {
+
+      var bits = QRUtil.getBCHTypeNumber(_typeNumber);
+
+      for (var i = 0; i < 18; i += 1) {
+        var mod = (!test && ( (bits >> i) & 1) == 1);
+        _modules[Math.floor(i / 3)][i % 3 + _moduleCount - 8 - 3] = mod;
+      }
+
+      for (var i = 0; i < 18; i += 1) {
+        var mod = (!test && ( (bits >> i) & 1) == 1);
+        _modules[i % 3 + _moduleCount - 8 - 3][Math.floor(i / 3)] = mod;
+      }
+    };
+
+    var setupTypeInfo = function(test, maskPattern) {
+
+      var data = (_errorCorrectionLevel << 3) | maskPattern;
+      var bits = QRUtil.getBCHTypeInfo(data);
+
+      // vertical
+      for (var i = 0; i < 15; i += 1) {
+
+        var mod = (!test && ( (bits >> i) & 1) == 1);
+
+        if (i < 6) {
+          _modules[i][8] = mod;
+        } else if (i < 8) {
+          _modules[i + 1][8] = mod;
+        } else {
+          _modules[_moduleCount - 15 + i][8] = mod;
+        }
+      }
+
+      // horizontal
+      for (var i = 0; i < 15; i += 1) {
+
+        var mod = (!test && ( (bits >> i) & 1) == 1);
+
+        if (i < 8) {
+          _modules[8][_moduleCount - i - 1] = mod;
+        } else if (i < 9) {
+          _modules[8][15 - i - 1 + 1] = mod;
+        } else {
+          _modules[8][15 - i - 1] = mod;
+        }
+      }
+
+      // fixed module
+      _modules[_moduleCount - 8][8] = (!test);
+    };
+
+    var mapData = function(data, maskPattern) {
+
+      var inc = -1;
+      var row = _moduleCount - 1;
+      var bitIndex = 7;
+      var byteIndex = 0;
+      var maskFunc = QRUtil.getMaskFunction(maskPattern);
+
+      for (var col = _moduleCount - 1; col > 0; col -= 2) {
+
+        if (col == 6) col -= 1;
+
+        while (true) {
+
+          for (var c = 0; c < 2; c += 1) {
+
+            if (_modules[row][col - c] == null) {
+
+              var dark = false;
+
+              if (byteIndex < data.length) {
+                dark = ( ( (data[byteIndex] >>> bitIndex) & 1) == 1);
+              }
+
+              var mask = maskFunc(row, col - c);
+
+              if (mask) {
+                dark = !dark;
+              }
+
+              _modules[row][col - c] = dark;
+              bitIndex -= 1;
+
+              if (bitIndex == -1) {
+                byteIndex += 1;
+                bitIndex = 7;
+              }
+            }
+          }
+
+          row += inc;
+
+          if (row < 0 || _moduleCount <= row) {
+            row -= inc;
+            inc = -inc;
+            break;
+          }
+        }
+      }
+    };
+
+    var createBytes = function(buffer, rsBlocks) {
+
+      var offset = 0;
+
+      var maxDcCount = 0;
+      var maxEcCount = 0;
+
+      var dcdata = new Array(rsBlocks.length);
+      var ecdata = new Array(rsBlocks.length);
+
+      for (var r = 0; r < rsBlocks.length; r += 1) {
+
+        var dcCount = rsBlocks[r].dataCount;
+        var ecCount = rsBlocks[r].totalCount - dcCount;
+
+        maxDcCount = Math.max(maxDcCount, dcCount);
+        maxEcCount = Math.max(maxEcCount, ecCount);
+
+        dcdata[r] = new Array(dcCount);
+
+        for (var i = 0; i < dcdata[r].length; i += 1) {
+          dcdata[r][i] = 0xff & buffer.getBuffer()[i + offset];
+        }
+        offset += dcCount;
+
+        var rsPoly = QRUtil.getErrorCorrectPolynomial(ecCount);
+        var rawPoly = qrPolynomial(dcdata[r], rsPoly.getLength() - 1);
+
+        var modPoly = rawPoly.mod(rsPoly);
+        ecdata[r] = new Array(rsPoly.getLength() - 1);
+        for (var i = 0; i < ecdata[r].length; i += 1) {
+          var modIndex = i + modPoly.getLength() - ecdata[r].length;
+          ecdata[r][i] = (modIndex >= 0)? modPoly.getAt(modIndex) : 0;
+        }
+      }
+
+      var totalCodeCount = 0;
+      for (var i = 0; i < rsBlocks.length; i += 1) {
+        totalCodeCount += rsBlocks[i].totalCount;
+      }
+
+      var data = new Array(totalCodeCount);
+      var index = 0;
+
+      for (var i = 0; i < maxDcCount; i += 1) {
+        for (var r = 0; r < rsBlocks.length; r += 1) {
+          if (i < dcdata[r].length) {
+            data[index] = dcdata[r][i];
+            index += 1;
+          }
+        }
+      }
+
+      for (var i = 0; i < maxEcCount; i += 1) {
+        for (var r = 0; r < rsBlocks.length; r += 1) {
+          if (i < ecdata[r].length) {
+            data[index] = ecdata[r][i];
+            index += 1;
+          }
+        }
+      }
+
+      return data;
+    };
+
+    var createData = function(typeNumber, errorCorrectionLevel, dataList) {
+
+      var rsBlocks = QRRSBlock.getRSBlocks(typeNumber, errorCorrectionLevel);
+
+      var buffer = qrBitBuffer();
+
+      for (var i = 0; i < dataList.length; i += 1) {
+        var data = dataList[i];
+        buffer.put(data.getMode(), 4);
+        buffer.put(data.getLength(), QRUtil.getLengthInBits(data.getMode(), typeNumber) );
+        data.write(buffer);
+      }
+
+      // calc num max data.
+      var totalDataCount = 0;
+      for (var i = 0; i < rsBlocks.length; i += 1) {
+        totalDataCount += rsBlocks[i].dataCount;
+      }
+
+      if (buffer.getLengthInBits() > totalDataCount * 8) {
+        throw 'code length overflow. ('
+          + buffer.getLengthInBits()
+          + '>'
+          + totalDataCount * 8
+          + ')';
+      }
+
+      // end code
+      if (buffer.getLengthInBits() + 4 <= totalDataCount * 8) {
+        buffer.put(0, 4);
+      }
+
+      // padding
+      while (buffer.getLengthInBits() % 8 != 0) {
+        buffer.putBit(false);
+      }
+
+      // padding
+      while (true) {
+
+        if (buffer.getLengthInBits() >= totalDataCount * 8) {
+          break;
+        }
+        buffer.put(PAD0, 8);
+
+        if (buffer.getLengthInBits() >= totalDataCount * 8) {
+          break;
+        }
+        buffer.put(PAD1, 8);
+      }
+
+      return createBytes(buffer, rsBlocks);
+    };
+
+    _this.addData = function(data, mode) {
+
+      mode = mode || 'Byte';
+
+      var newData = null;
+
+      switch(mode) {
+      case 'Numeric' :
+        newData = qrNumber(data);
+        break;
+      case 'Alphanumeric' :
+        newData = qrAlphaNum(data);
+        break;
+      case 'Byte' :
+        newData = qr8BitByte(data);
+        break;
+      case 'Kanji' :
+        newData = qrKanji(data);
+        break;
+      default :
+        throw 'mode:' + mode;
+      }
+
+      _dataList.push(newData);
+      _dataCache = null;
+    };
+
+    _this.isDark = function(row, col) {
+      if (row < 0 || _moduleCount <= row || col < 0 || _moduleCount <= col) {
+        throw row + ',' + col;
+      }
+      return _modules[row][col];
+    };
+
+    _this.getModuleCount = function() {
+      return _moduleCount;
+    };
+
+    _this.make = function() {
+      if (_typeNumber < 1) {
+        var typeNumber = 1;
+
+        for (; typeNumber < 40; typeNumber++) {
+          var rsBlocks = QRRSBlock.getRSBlocks(typeNumber, _errorCorrectionLevel);
+          var buffer = qrBitBuffer();
+
+          for (var i = 0; i < _dataList.length; i++) {
+            var data = _dataList[i];
+            buffer.put(data.getMode(), 4);
+            buffer.put(data.getLength(), QRUtil.getLengthInBits(data.getMode(), typeNumber) );
+            data.write(buffer);
+          }
+
+          var totalDataCount = 0;
+          for (var i = 0; i < rsBlocks.length; i++) {
+            totalDataCount += rsBlocks[i].dataCount;
+          }
+
+          if (buffer.getLengthInBits() <= totalDataCount * 8) {
+            break;
+          }
+        }
+
+        _typeNumber = typeNumber;
+      }
+
+      makeImpl(false, getBestMaskPattern() );
+    };
+
+    _this.createTableTag = function(cellSize, margin) {
+
+      cellSize = cellSize || 2;
+      margin = (typeof margin == 'undefined')? cellSize * 4 : margin;
+
+      var qrHtml = '';
+
+      qrHtml += '<table style="';
+      qrHtml += ' border-width: 0px; border-style: none;';
+      qrHtml += ' border-collapse: collapse;';
+      qrHtml += ' padding: 0px; margin: ' + margin + 'px;';
+      qrHtml += '">';
+      qrHtml += '<tbody>';
+
+      for (var r = 0; r < _this.getModuleCount(); r += 1) {
+
+        qrHtml += '<tr>';
+
+        for (var c = 0; c < _this.getModuleCount(); c += 1) {
+          qrHtml += '<td style="';
+          qrHtml += ' border-width: 0px; border-style: none;';
+          qrHtml += ' border-collapse: collapse;';
+          qrHtml += ' padding: 0px; margin: 0px;';
+          qrHtml += ' width: ' + cellSize + 'px;';
+          qrHtml += ' height: ' + cellSize + 'px;';
+          qrHtml += ' background-color: ';
+          qrHtml += _this.isDark(r, c)? '#000000' : '#ffffff';
+          qrHtml += ';';
+          qrHtml += '"/>';
+        }
+
+        qrHtml += '</tr>';
+      }
+
+      qrHtml += '</tbody>';
+      qrHtml += '</table>';
+
+      return qrHtml;
+    };
+
+    _this.createSvgTag = function(cellSize, margin, alt, title) {
+
+      var opts = {};
+      if (typeof arguments[0] == 'object') {
+        // Called by options.
+        opts = arguments[0];
+        // overwrite cellSize and margin.
+        cellSize = opts.cellSize;
+        margin = opts.margin;
+        alt = opts.alt;
+        title = opts.title;
+      }
+
+      cellSize = cellSize || 2;
+      margin = (typeof margin == 'undefined')? cellSize * 4 : margin;
+
+      // Compose alt property surrogate
+      alt = (typeof alt === 'string') ? {text: alt} : alt || {};
+      alt.text = alt.text || null;
+      alt.id = (alt.text) ? alt.id || 'qrcode-description' : null;
+
+      // Compose title property surrogate
+      title = (typeof title === 'string') ? {text: title} : title || {};
+      title.text = title.text || null;
+      title.id = (title.text) ? title.id || 'qrcode-title' : null;
+
+      var size = _this.getModuleCount() * cellSize + margin * 2;
+      var c, mc, r, mr, qrSvg='', rect;
+
+      rect = 'l' + cellSize + ',0 0,' + cellSize +
+        ' -' + cellSize + ',0 0,-' + cellSize + 'z ';
+
+      qrSvg += '<svg version="1.1" xmlns="http://www.w3.org/2000/svg"';
+      qrSvg += !opts.scalable ? ' width="' + size + 'px" height="' + size + 'px"' : '';
+      qrSvg += ' viewBox="0 0 ' + size + ' ' + size + '" ';
+      qrSvg += ' preserveAspectRatio="xMinYMin meet"';
+      qrSvg += (title.text || alt.text) ? ' role="img" aria-labelledby="' +
+          escapeXml([title.id, alt.id].join(' ').trim() ) + '"' : '';
+      qrSvg += '>';
+      qrSvg += (title.text) ? '<title id="' + escapeXml(title.id) + '">' +
+          escapeXml(title.text) + '</title>' : '';
+      qrSvg += (alt.text) ? '<description id="' + escapeXml(alt.id) + '">' +
+          escapeXml(alt.text) + '</description>' : '';
+      qrSvg += '<rect width="100%" height="100%" fill="white" cx="0" cy="0"/>';
+      qrSvg += '<path d="';
+
+      for (r = 0; r < _this.getModuleCount(); r += 1) {
+        mr = r * cellSize + margin;
+        for (c = 0; c < _this.getModuleCount(); c += 1) {
+          if (_this.isDark(r, c) ) {
+            mc = c*cellSize+margin;
+            qrSvg += 'M' + mc + ',' + mr + rect;
+          }
+        }
+      }
+
+      qrSvg += '" stroke="transparent" fill="black"/>';
+      qrSvg += '</svg>';
+
+      return qrSvg;
+    };
+
+    _this.createDataURL = function(cellSize, margin) {
+
+      cellSize = cellSize || 2;
+      margin = (typeof margin == 'undefined')? cellSize * 4 : margin;
+
+      var size = _this.getModuleCount() * cellSize + margin * 2;
+      var min = margin;
+      var max = size - margin;
+
+      return createDataURL(size, size, function(x, y) {
+        if (min <= x && x < max && min <= y && y < max) {
+          var c = Math.floor( (x - min) / cellSize);
+          var r = Math.floor( (y - min) / cellSize);
+          return _this.isDark(r, c)? 0 : 1;
+        } else {
+          return 1;
+        }
+      } );
+    };
+
+    _this.createImgTag = function(cellSize, margin, alt) {
+
+      cellSize = cellSize || 2;
+      margin = (typeof margin == 'undefined')? cellSize * 4 : margin;
+
+      var size = _this.getModuleCount() * cellSize + margin * 2;
+
+      var img = '';
+      img += '<img';
+      img += '\u0020src="';
+      img += _this.createDataURL(cellSize, margin);
+      img += '"';
+      img += '\u0020width="';
+      img += size;
+      img += '"';
+      img += '\u0020height="';
+      img += size;
+      img += '"';
+      if (alt) {
+        img += '\u0020alt="';
+        img += escapeXml(alt);
+        img += '"';
+      }
+      img += '/>';
+
+      return img;
+    };
+
+    var escapeXml = function(s) {
+      var escaped = '';
+      for (var i = 0; i < s.length; i += 1) {
+        var c = s.charAt(i);
+        switch(c) {
+        case '<': escaped += '&lt;'; break;
+        case '>': escaped += '&gt;'; break;
+        case '&': escaped += '&amp;'; break;
+        case '"': escaped += '&quot;'; break;
+        default : escaped += c; break;
+        }
+      }
+      return escaped;
+    };
+
+    var _createHalfASCII = function(margin) {
+      var cellSize = 1;
+      margin = (typeof margin == 'undefined')? cellSize * 2 : margin;
+
+      var size = _this.getModuleCount() * cellSize + margin * 2;
+      var min = margin;
+      var max = size - margin;
+
+      var y, x, r1, r2, p;
+
+      var blocks = {
+        '██': '█',
+        '█ ': '▀',
+        ' █': '▄',
+        '  ': ' '
+      };
+
+      var blocksLastLineNoMargin = {
+        '██': '▀',
+        '█ ': '▀',
+        ' █': ' ',
+        '  ': ' '
+      };
+
+      var ascii = '';
+      for (y = 0; y < size; y += 2) {
+        r1 = Math.floor((y - min) / cellSize);
+        r2 = Math.floor((y + 1 - min) / cellSize);
+        for (x = 0; x < size; x += 1) {
+          p = '█';
+
+          if (min <= x && x < max && min <= y && y < max && _this.isDark(r1, Math.floor((x - min) / cellSize))) {
+            p = ' ';
+          }
+
+          if (min <= x && x < max && min <= y+1 && y+1 < max && _this.isDark(r2, Math.floor((x - min) / cellSize))) {
+            p += ' ';
+          }
+          else {
+            p += '█';
+          }
+
+          // Output 2 characters per pixel, to create full square. 1 character per pixels gives only half width of square.
+          ascii += (margin < 1 && y+1 >= max) ? blocksLastLineNoMargin[p] : blocks[p];
+        }
+
+        ascii += '\n';
+      }
+
+      if (size % 2 && margin > 0) {
+        return ascii.substring(0, ascii.length - size - 1) + Array(size+1).join('▀');
+      }
+
+      return ascii.substring(0, ascii.length-1);
+    };
+
+    _this.createASCII = function(cellSize, margin) {
+      cellSize = cellSize || 1;
+
+      if (cellSize < 2) {
+        return _createHalfASCII(margin);
+      }
+
+      cellSize -= 1;
+      margin = (typeof margin == 'undefined')? cellSize * 2 : margin;
+
+      var size = _this.getModuleCount() * cellSize + margin * 2;
+      var min = margin;
+      var max = size - margin;
+
+      var y, x, r, p;
+
+      var white = Array(cellSize+1).join('██');
+      var black = Array(cellSize+1).join('  ');
+
+      var ascii = '';
+      var line = '';
+      for (y = 0; y < size; y += 1) {
+        r = Math.floor( (y - min) / cellSize);
+        line = '';
+        for (x = 0; x < size; x += 1) {
+          p = 1;
+
+          if (min <= x && x < max && min <= y && y < max && _this.isDark(r, Math.floor((x - min) / cellSize))) {
+            p = 0;
+          }
+
+          // Output 2 characters per pixel, to create full square. 1 character per pixels gives only half width of square.
+          line += p ? white : black;
+        }
+
+        for (r = 0; r < cellSize; r += 1) {
+          ascii += line + '\n';
+        }
+      }
+
+      return ascii.substring(0, ascii.length-1);
+    };
+
+    _this.renderTo2dContext = function(context, cellSize) {
+      cellSize = cellSize || 2;
+      var length = _this.getModuleCount();
+      for (var row = 0; row < length; row++) {
+        for (var col = 0; col < length; col++) {
+          context.fillStyle = _this.isDark(row, col) ? 'black' : 'white';
+          context.fillRect(col * cellSize, row * cellSize, cellSize, cellSize);
+        }
+      }
+    }
+
+    return _this;
+  };
+
+  //---------------------------------------------------------------------
+  // qrcode.stringToBytes
+  //---------------------------------------------------------------------
+
+  qrcode.stringToBytesFuncs = {
+    'default' : function(s) {
+      var bytes = [];
+      for (var i = 0; i < s.length; i += 1) {
+        var c = s.charCodeAt(i);
+        bytes.push(c & 0xff);
+      }
+      return bytes;
+    }
+  };
+
+  qrcode.stringToBytes = qrcode.stringToBytesFuncs['default'];
+
+  //---------------------------------------------------------------------
+  // qrcode.createStringToBytes
+  //---------------------------------------------------------------------
+
+  /**
+   * @param unicodeData base64 string of byte array.
+   * [16bit Unicode],[16bit Bytes], ...
+   * @param numChars
+   */
+  qrcode.createStringToBytes = function(unicodeData, numChars) {
+
+    // create conversion map.
+
+    var unicodeMap = function() {
+
+      var bin = base64DecodeInputStream(unicodeData);
+      var read = function() {
+        var b = bin.read();
+        if (b == -1) throw 'eof';
+        return b;
+      };
+
+      var count = 0;
+      var unicodeMap = {};
+      while (true) {
+        var b0 = bin.read();
+        if (b0 == -1) break;
+        var b1 = read();
+        var b2 = read();
+        var b3 = read();
+        var k = String.fromCharCode( (b0 << 8) | b1);
+        var v = (b2 << 8) | b3;
+        unicodeMap[k] = v;
+        count += 1;
+      }
+      if (count != numChars) {
+        throw count + ' != ' + numChars;
+      }
+
+      return unicodeMap;
+    }();
+
+    var unknownChar = '?'.charCodeAt(0);
+
+    return function(s) {
+      var bytes = [];
+      for (var i = 0; i < s.length; i += 1) {
+        var c = s.charCodeAt(i);
+        if (c < 128) {
+          bytes.push(c);
+        } else {
+          var b = unicodeMap[s.charAt(i)];
+          if (typeof b == 'number') {
+            if ( (b & 0xff) == b) {
+              // 1byte
+              bytes.push(b);
+            } else {
+              // 2bytes
+              bytes.push(b >>> 8);
+              bytes.push(b & 0xff);
+            }
+          } else {
+            bytes.push(unknownChar);
+          }
+        }
+      }
+      return bytes;
+    };
+  };
+
+  //---------------------------------------------------------------------
+  // QRMode
+  //---------------------------------------------------------------------
+
+  var QRMode = {
+    MODE_NUMBER :    1 << 0,
+    MODE_ALPHA_NUM : 1 << 1,
+    MODE_8BIT_BYTE : 1 << 2,
+    MODE_KANJI :     1 << 3
+  };
+
+  //---------------------------------------------------------------------
+  // QRErrorCorrectionLevel
+  //---------------------------------------------------------------------
+
+  var QRErrorCorrectionLevel = {
+    L : 1,
+    M : 0,
+    Q : 3,
+    H : 2
+  };
+
+  //---------------------------------------------------------------------
+  // QRMaskPattern
+  //---------------------------------------------------------------------
+
+  var QRMaskPattern = {
+    PATTERN000 : 0,
+    PATTERN001 : 1,
+    PATTERN010 : 2,
+    PATTERN011 : 3,
+    PATTERN100 : 4,
+    PATTERN101 : 5,
+    PATTERN110 : 6,
+    PATTERN111 : 7
+  };
+
+  //---------------------------------------------------------------------
+  // QRUtil
+  //---------------------------------------------------------------------
+
+  var QRUtil = function() {
+
+    var PATTERN_POSITION_TABLE = [
+      [],
+      [6, 18],
+      [6, 22],
+      [6, 26],
+      [6, 30],
+      [6, 34],
+      [6, 22, 38],
+      [6, 24, 42],
+      [6, 26, 46],
+      [6, 28, 50],
+      [6, 30, 54],
+      [6, 32, 58],
+      [6, 34, 62],
+      [6, 26, 46, 66],
+      [6, 26, 48, 70],
+      [6, 26, 50, 74],
+      [6, 30, 54, 78],
+      [6, 30, 56, 82],
+      [6, 30, 58, 86],
+      [6, 34, 62, 90],
+      [6, 28, 50, 72, 94],
+      [6, 26, 50, 74, 98],
+      [6, 30, 54, 78, 102],
+      [6, 28, 54, 80, 106],
+      [6, 32, 58, 84, 110],
+      [6, 30, 58, 86, 114],
+      [6, 34, 62, 90, 118],
+      [6, 26, 50, 74, 98, 122],
+      [6, 30, 54, 78, 102, 126],
+      [6, 26, 52, 78, 104, 130],
+      [6, 30, 56, 82, 108, 134],
+      [6, 34, 60, 86, 112, 138],
+      [6, 30, 58, 86, 114, 142],
+      [6, 34, 62, 90, 118, 146],
+      [6, 30, 54, 78, 102, 126, 150],
+      [6, 24, 50, 76, 102, 128, 154],
+      [6, 28, 54, 80, 106, 132, 158],
+      [6, 32, 58, 84, 110, 136, 162],
+      [6, 26, 54, 82, 110, 138, 166],
+      [6, 30, 58, 86, 114, 142, 170]
+    ];
+    var G15 = (1 << 10) | (1 << 8) | (1 << 5) | (1 << 4) | (1 << 2) | (1 << 1) | (1 << 0);
+    var G18 = (1 << 12) | (1 << 11) | (1 << 10) | (1 << 9) | (1 << 8) | (1 << 5) | (1 << 2) | (1 << 0);
+    var G15_MASK = (1 << 14) | (1 << 12) | (1 << 10) | (1 << 4) | (1 << 1);
+
+    var _this = {};
+
+    var getBCHDigit = function(data) {
+      var digit = 0;
+      while (data != 0) {
+        digit += 1;
+        data >>>= 1;
+      }
+      return digit;
+    };
+
+    _this.getBCHTypeInfo = function(data) {
+      var d = data << 10;
+      while (getBCHDigit(d) - getBCHDigit(G15) >= 0) {
+        d ^= (G15 << (getBCHDigit(d) - getBCHDigit(G15) ) );
+      }
+      return ( (data << 10) | d) ^ G15_MASK;
+    };
+
+    _this.getBCHTypeNumber = function(data) {
+      var d = data << 12;
+      while (getBCHDigit(d) - getBCHDigit(G18) >= 0) {
+        d ^= (G18 << (getBCHDigit(d) - getBCHDigit(G18) ) );
+      }
+      return (data << 12) | d;
+    };
+
+    _this.getPatternPosition = function(typeNumber) {
+      return PATTERN_POSITION_TABLE[typeNumber - 1];
+    };
+
+    _this.getMaskFunction = function(maskPattern) {
+
+      switch (maskPattern) {
+
+      case QRMaskPattern.PATTERN000 :
+        return function(i, j) { return (i + j) % 2 == 0; };
+      case QRMaskPattern.PATTERN001 :
+        return function(i, j) { return i % 2 == 0; };
+      case QRMaskPattern.PATTERN010 :
+        return function(i, j) { return j % 3 == 0; };
+      case QRMaskPattern.PATTERN011 :
+        return function(i, j) { return (i + j) % 3 == 0; };
+      case QRMaskPattern.PATTERN100 :
+        return function(i, j) { return (Math.floor(i / 2) + Math.floor(j / 3) ) % 2 == 0; };
+      case QRMaskPattern.PATTERN101 :
+        return function(i, j) { return (i * j) % 2 + (i * j) % 3 == 0; };
+      case QRMaskPattern.PATTERN110 :
+        return function(i, j) { return ( (i * j) % 2 + (i * j) % 3) % 2 == 0; };
+      case QRMaskPattern.PATTERN111 :
+        return function(i, j) { return ( (i * j) % 3 + (i + j) % 2) % 2 == 0; };
+
+      default :
+        throw 'bad maskPattern:' + maskPattern;
+      }
+    };
+
+    _this.getErrorCorrectPolynomial = function(errorCorrectLength) {
+      var a = qrPolynomial([1], 0);
+      for (var i = 0; i < errorCorrectLength; i += 1) {
+        a = a.multiply(qrPolynomial([1, QRMath.gexp(i)], 0) );
+      }
+      return a;
+    };
+
+    _this.getLengthInBits = function(mode, type) {
+
+      if (1 <= type && type < 10) {
+
+        // 1 - 9
+
+        switch(mode) {
+        case QRMode.MODE_NUMBER    : return 10;
+        case QRMode.MODE_ALPHA_NUM : return 9;
+        case QRMode.MODE_8BIT_BYTE : return 8;
+        case QRMode.MODE_KANJI     : return 8;
+        default :
+          throw 'mode:' + mode;
+        }
+
+      } else if (type < 27) {
+
+        // 10 - 26
+
+        switch(mode) {
+        case QRMode.MODE_NUMBER    : return 12;
+        case QRMode.MODE_ALPHA_NUM : return 11;
+        case QRMode.MODE_8BIT_BYTE : return 16;
+        case QRMode.MODE_KANJI     : return 10;
+        default :
+          throw 'mode:' + mode;
+        }
+
+      } else if (type < 41) {
+
+        // 27 - 40
+
+        switch(mode) {
+        case QRMode.MODE_NUMBER    : return 14;
+        case QRMode.MODE_ALPHA_NUM : return 13;
+        case QRMode.MODE_8BIT_BYTE : return 16;
+        case QRMode.MODE_KANJI     : return 12;
+        default :
+          throw 'mode:' + mode;
+        }
+
+      } else {
+        throw 'type:' + type;
+      }
+    };
+
+    _this.getLostPoint = function(qrcode) {
+
+      var moduleCount = qrcode.getModuleCount();
+
+      var lostPoint = 0;
+
+      // LEVEL1
+
+      for (var row = 0; row < moduleCount; row += 1) {
+        for (var col = 0; col < moduleCount; col += 1) {
+
+          var sameCount = 0;
+          var dark = qrcode.isDark(row, col);
+
+          for (var r = -1; r <= 1; r += 1) {
+
+            if (row + r < 0 || moduleCount <= row + r) {
+              continue;
+            }
+
+            for (var c = -1; c <= 1; c += 1) {
+
+              if (col + c < 0 || moduleCount <= col + c) {
+                continue;
+              }
+
+              if (r == 0 && c == 0) {
+                continue;
+              }
+
+              if (dark == qrcode.isDark(row + r, col + c) ) {
+                sameCount += 1;
+              }
+            }
+          }
+
+          if (sameCount > 5) {
+            lostPoint += (3 + sameCount - 5);
+          }
+        }
+      };
+
+      // LEVEL2
+
+      for (var row = 0; row < moduleCount - 1; row += 1) {
+        for (var col = 0; col < moduleCount - 1; col += 1) {
+          var count = 0;
+          if (qrcode.isDark(row, col) ) count += 1;
+          if (qrcode.isDark(row + 1, col) ) count += 1;
+          if (qrcode.isDark(row, col + 1) ) count += 1;
+          if (qrcode.isDark(row + 1, col + 1) ) count += 1;
+          if (count == 0 || count == 4) {
+            lostPoint += 3;
+          }
+        }
+      }
+
+      // LEVEL3
+
+      for (var row = 0; row < moduleCount; row += 1) {
+        for (var col = 0; col < moduleCount - 6; col += 1) {
+          if (qrcode.isDark(row, col)
+              && !qrcode.isDark(row, col + 1)
+              &&  qrcode.isDark(row, col + 2)
+              &&  qrcode.isDark(row, col + 3)
+              &&  qrcode.isDark(row, col + 4)
+              && !qrcode.isDark(row, col + 5)
+              &&  qrcode.isDark(row, col + 6) ) {
+            lostPoint += 40;
+          }
+        }
+      }
+
+      for (var col = 0; col < moduleCount; col += 1) {
+        for (var row = 0; row < moduleCount - 6; row += 1) {
+          if (qrcode.isDark(row, col)
+              && !qrcode.isDark(row + 1, col)
+              &&  qrcode.isDark(row + 2, col)
+              &&  qrcode.isDark(row + 3, col)
+              &&  qrcode.isDark(row + 4, col)
+              && !qrcode.isDark(row + 5, col)
+              &&  qrcode.isDark(row + 6, col) ) {
+            lostPoint += 40;
+          }
+        }
+      }
+
+      // LEVEL4
+
+      var darkCount = 0;
+
+      for (var col = 0; col < moduleCount; col += 1) {
+        for (var row = 0; row < moduleCount; row += 1) {
+          if (qrcode.isDark(row, col) ) {
+            darkCount += 1;
+          }
+        }
+      }
+
+      var ratio = Math.abs(100 * darkCount / moduleCount / moduleCount - 50) / 5;
+      lostPoint += ratio * 10;
+
+      return lostPoint;
+    };
+
+    return _this;
+  }();
+
+  //---------------------------------------------------------------------
+  // QRMath
+  //---------------------------------------------------------------------
+
+  var QRMath = function() {
+
+    var EXP_TABLE = new Array(256);
+    var LOG_TABLE = new Array(256);
+
+    // initialize tables
+    for (var i = 0; i < 8; i += 1) {
+      EXP_TABLE[i] = 1 << i;
+    }
+    for (var i = 8; i < 256; i += 1) {
+      EXP_TABLE[i] = EXP_TABLE[i - 4]
+        ^ EXP_TABLE[i - 5]
+        ^ EXP_TABLE[i - 6]
+        ^ EXP_TABLE[i - 8];
+    }
+    for (var i = 0; i < 255; i += 1) {
+      LOG_TABLE[EXP_TABLE[i] ] = i;
+    }
+
+    var _this = {};
+
+    _this.glog = function(n) {
+
+      if (n < 1) {
+        throw 'glog(' + n + ')';
+      }
+
+      return LOG_TABLE[n];
+    };
+
+    _this.gexp = function(n) {
+
+      while (n < 0) {
+        n += 255;
+      }
+
+      while (n >= 256) {
+        n -= 255;
+      }
+
+      return EXP_TABLE[n];
+    };
+
+    return _this;
+  }();
+
+  //---------------------------------------------------------------------
+  // qrPolynomial
+  //---------------------------------------------------------------------
+
+  function qrPolynomial(num, shift) {
+
+    if (typeof num.length == 'undefined') {
+      throw num.length + '/' + shift;
+    }
+
+    var _num = function() {
+      var offset = 0;
+      while (offset < num.length && num[offset] == 0) {
+        offset += 1;
+      }
+      var _num = new Array(num.length - offset + shift);
+      for (var i = 0; i < num.length - offset; i += 1) {
+        _num[i] = num[i + offset];
+      }
+      return _num;
+    }();
+
+    var _this = {};
+
+    _this.getAt = function(index) {
+      return _num[index];
+    };
+
+    _this.getLength = function() {
+      return _num.length;
+    };
+
+    _this.multiply = function(e) {
+
+      var num = new Array(_this.getLength() + e.getLength() - 1);
+
+      for (var i = 0; i < _this.getLength(); i += 1) {
+        for (var j = 0; j < e.getLength(); j += 1) {
+          num[i + j] ^= QRMath.gexp(QRMath.glog(_this.getAt(i) ) + QRMath.glog(e.getAt(j) ) );
+        }
+      }
+
+      return qrPolynomial(num, 0);
+    };
+
+    _this.mod = function(e) {
+
+      if (_this.getLength() - e.getLength() < 0) {
+        return _this;
+      }
+
+      var ratio = QRMath.glog(_this.getAt(0) ) - QRMath.glog(e.getAt(0) );
+
+      var num = new Array(_this.getLength() );
+      for (var i = 0; i < _this.getLength(); i += 1) {
+        num[i] = _this.getAt(i);
+      }
+
+      for (var i = 0; i < e.getLength(); i += 1) {
+        num[i] ^= QRMath.gexp(QRMath.glog(e.getAt(i) ) + ratio);
+      }
+
+      // recursive call
+      return qrPolynomial(num, 0).mod(e);
+    };
+
+    return _this;
+  };
+
+  //---------------------------------------------------------------------
+  // QRRSBlock
+  //---------------------------------------------------------------------
+
+  var QRRSBlock = function() {
+
+    var RS_BLOCK_TABLE = [
+
+      // L
+      // M
+      // Q
+      // H
+
+      // 1
+      [1, 26, 19],
+      [1, 26, 16],
+      [1, 26, 13],
+      [1, 26, 9],
+
+      // 2
+      [1, 44, 34],
+      [1, 44, 28],
+      [1, 44, 22],
+      [1, 44, 16],
+
+      // 3
+      [1, 70, 55],
+      [1, 70, 44],
+      [2, 35, 17],
+      [2, 35, 13],
+
+      // 4
+      [1, 100, 80],
+      [2, 50, 32],
+      [2, 50, 24],
+      [4, 25, 9],
+
+      // 5
+      [1, 134, 108],
+      [2, 67, 43],
+      [2, 33, 15, 2, 34, 16],
+      [2, 33, 11, 2, 34, 12],
+
+      // 6
+      [2, 86, 68],
+      [4, 43, 27],
+      [4, 43, 19],
+      [4, 43, 15],
+
+      // 7
+      [2, 98, 78],
+      [4, 49, 31],
+      [2, 32, 14, 4, 33, 15],
+      [4, 39, 13, 1, 40, 14],
+
+      // 8
+      [2, 121, 97],
+      [2, 60, 38, 2, 61, 39],
+      [4, 40, 18, 2, 41, 19],
+      [4, 40, 14, 2, 41, 15],
+
+      // 9
+      [2, 146, 116],
+      [3, 58, 36, 2, 59, 37],
+      [4, 36, 16, 4, 37, 17],
+      [4, 36, 12, 4, 37, 13],
+
+      // 10
+      [2, 86, 68, 2, 87, 69],
+      [4, 69, 43, 1, 70, 44],
+      [6, 43, 19, 2, 44, 20],
+      [6, 43, 15, 2, 44, 16],
+
+      // 11
+      [4, 101, 81],
+      [1, 80, 50, 4, 81, 51],
+      [4, 50, 22, 4, 51, 23],
+      [3, 36, 12, 8, 37, 13],
+
+      // 12
+      [2, 116, 92, 2, 117, 93],
+      [6, 58, 36, 2, 59, 37],
+      [4, 46, 20, 6, 47, 21],
+      [7, 42, 14, 4, 43, 15],
+
+      // 13
+      [4, 133, 107],
+      [8, 59, 37, 1, 60, 38],
+      [8, 44, 20, 4, 45, 21],
+      [12, 33, 11, 4, 34, 12],
+
+      // 14
+      [3, 145, 115, 1, 146, 116],
+      [4, 64, 40, 5, 65, 41],
+      [11, 36, 16, 5, 37, 17],
+      [11, 36, 12, 5, 37, 13],
+
+      // 15
+      [5, 109, 87, 1, 110, 88],
+      [5, 65, 41, 5, 66, 42],
+      [5, 54, 24, 7, 55, 25],
+      [11, 36, 12, 7, 37, 13],
+
+      // 16
+      [5, 122, 98, 1, 123, 99],
+      [7, 73, 45, 3, 74, 46],
+      [15, 43, 19, 2, 44, 20],
+      [3, 45, 15, 13, 46, 16],
+
+      // 17
+      [1, 135, 107, 5, 136, 108],
+      [10, 74, 46, 1, 75, 47],
+      [1, 50, 22, 15, 51, 23],
+      [2, 42, 14, 17, 43, 15],
+
+      // 18
+      [5, 150, 120, 1, 151, 121],
+      [9, 69, 43, 4, 70, 44],
+      [17, 50, 22, 1, 51, 23],
+      [2, 42, 14, 19, 43, 15],
+
+      // 19
+      [3, 141, 113, 4, 142, 114],
+      [3, 70, 44, 11, 71, 45],
+      [17, 47, 21, 4, 48, 22],
+      [9, 39, 13, 16, 40, 14],
+
+      // 20
+      [3, 135, 107, 5, 136, 108],
+      [3, 67, 41, 13, 68, 42],
+      [15, 54, 24, 5, 55, 25],
+      [15, 43, 15, 10, 44, 16],
+
+      // 21
+      [4, 144, 116, 4, 145, 117],
+      [17, 68, 42],
+      [17, 50, 22, 6, 51, 23],
+      [19, 46, 16, 6, 47, 17],
+
+      // 22
+      [2, 139, 111, 7, 140, 112],
+      [17, 74, 46],
+      [7, 54, 24, 16, 55, 25],
+      [34, 37, 13],
+
+      // 23
+      [4, 151, 121, 5, 152, 122],
+      [4, 75, 47, 14, 76, 48],
+      [11, 54, 24, 14, 55, 25],
+      [16, 45, 15, 14, 46, 16],
+
+      // 24
+      [6, 147, 117, 4, 148, 118],
+      [6, 73, 45, 14, 74, 46],
+      [11, 54, 24, 16, 55, 25],
+      [30, 46, 16, 2, 47, 17],
+
+      // 25
+      [8, 132, 106, 4, 133, 107],
+      [8, 75, 47, 13, 76, 48],
+      [7, 54, 24, 22, 55, 25],
+      [22, 45, 15, 13, 46, 16],
+
+      // 26
+      [10, 142, 114, 2, 143, 115],
+      [19, 74, 46, 4, 75, 47],
+      [28, 50, 22, 6, 51, 23],
+      [33, 46, 16, 4, 47, 17],
+
+      // 27
+      [8, 152, 122, 4, 153, 123],
+      [22, 73, 45, 3, 74, 46],
+      [8, 53, 23, 26, 54, 24],
+      [12, 45, 15, 28, 46, 16],
+
+      // 28
+      [3, 147, 117, 10, 148, 118],
+      [3, 73, 45, 23, 74, 46],
+      [4, 54, 24, 31, 55, 25],
+      [11, 45, 15, 31, 46, 16],
+
+      // 29
+      [7, 146, 116, 7, 147, 117],
+      [21, 73, 45, 7, 74, 46],
+      [1, 53, 23, 37, 54, 24],
+      [19, 45, 15, 26, 46, 16],
+
+      // 30
+      [5, 145, 115, 10, 146, 116],
+      [19, 75, 47, 10, 76, 48],
+      [15, 54, 24, 25, 55, 25],
+      [23, 45, 15, 25, 46, 16],
+
+      // 31
+      [13, 145, 115, 3, 146, 116],
+      [2, 74, 46, 29, 75, 47],
+      [42, 54, 24, 1, 55, 25],
+      [23, 45, 15, 28, 46, 16],
+
+      // 32
+      [17, 145, 115],
+      [10, 74, 46, 23, 75, 47],
+      [10, 54, 24, 35, 55, 25],
+      [19, 45, 15, 35, 46, 16],
+
+      // 33
+      [17, 145, 115, 1, 146, 116],
+      [14, 74, 46, 21, 75, 47],
+      [29, 54, 24, 19, 55, 25],
+      [11, 45, 15, 46, 46, 16],
+
+      // 34
+      [13, 145, 115, 6, 146, 116],
+      [14, 74, 46, 23, 75, 47],
+      [44, 54, 24, 7, 55, 25],
+      [59, 46, 16, 1, 47, 17],
+
+      // 35
+      [12, 151, 121, 7, 152, 122],
+      [12, 75, 47, 26, 76, 48],
+      [39, 54, 24, 14, 55, 25],
+      [22, 45, 15, 41, 46, 16],
+
+      // 36
+      [6, 151, 121, 14, 152, 122],
+      [6, 75, 47, 34, 76, 48],
+      [46, 54, 24, 10, 55, 25],
+      [2, 45, 15, 64, 46, 16],
+
+      // 37
+      [17, 152, 122, 4, 153, 123],
+      [29, 74, 46, 14, 75, 47],
+      [49, 54, 24, 10, 55, 25],
+      [24, 45, 15, 46, 46, 16],
+
+      // 38
+      [4, 152, 122, 18, 153, 123],
+      [13, 74, 46, 32, 75, 47],
+      [48, 54, 24, 14, 55, 25],
+      [42, 45, 15, 32, 46, 16],
+
+      // 39
+      [20, 147, 117, 4, 148, 118],
+      [40, 75, 47, 7, 76, 48],
+      [43, 54, 24, 22, 55, 25],
+      [10, 45, 15, 67, 46, 16],
+
+      // 40
+      [19, 148, 118, 6, 149, 119],
+      [18, 75, 47, 31, 76, 48],
+      [34, 54, 24, 34, 55, 25],
+      [20, 45, 15, 61, 46, 16]
+    ];
+
+    var qrRSBlock = function(totalCount, dataCount) {
+      var _this = {};
+      _this.totalCount = totalCount;
+      _this.dataCount = dataCount;
+      return _this;
+    };
+
+    var _this = {};
+
+    var getRsBlockTable = function(typeNumber, errorCorrectionLevel) {
+
+      switch(errorCorrectionLevel) {
+      case QRErrorCorrectionLevel.L :
+        return RS_BLOCK_TABLE[(typeNumber - 1) * 4 + 0];
+      case QRErrorCorrectionLevel.M :
+        return RS_BLOCK_TABLE[(typeNumber - 1) * 4 + 1];
+      case QRErrorCorrectionLevel.Q :
+        return RS_BLOCK_TABLE[(typeNumber - 1) * 4 + 2];
+      case QRErrorCorrectionLevel.H :
+        return RS_BLOCK_TABLE[(typeNumber - 1) * 4 + 3];
+      default :
+        return undefined;
+      }
+    };
+
+    _this.getRSBlocks = function(typeNumber, errorCorrectionLevel) {
+
+      var rsBlock = getRsBlockTable(typeNumber, errorCorrectionLevel);
+
+      if (typeof rsBlock == 'undefined') {
+        throw 'bad rs block @ typeNumber:' + typeNumber +
+            '/errorCorrectionLevel:' + errorCorrectionLevel;
+      }
+
+      var length = rsBlock.length / 3;
+
+      var list = [];
+
+      for (var i = 0; i < length; i += 1) {
+
+        var count = rsBlock[i * 3 + 0];
+        var totalCount = rsBlock[i * 3 + 1];
+        var dataCount = rsBlock[i * 3 + 2];
+
+        for (var j = 0; j < count; j += 1) {
+          list.push(qrRSBlock(totalCount, dataCount) );
+        }
+      }
+
+      return list;
+    };
+
+    return _this;
+  }();
+
+  //---------------------------------------------------------------------
+  // qrBitBuffer
+  //---------------------------------------------------------------------
+
+  var qrBitBuffer = function() {
+
+    var _buffer = [];
+    var _length = 0;
+
+    var _this = {};
+
+    _this.getBuffer = function() {
+      return _buffer;
+    };
+
+    _this.getAt = function(index) {
+      var bufIndex = Math.floor(index / 8);
+      return ( (_buffer[bufIndex] >>> (7 - index % 8) ) & 1) == 1;
+    };
+
+    _this.put = function(num, length) {
+      for (var i = 0; i < length; i += 1) {
+        _this.putBit( ( (num >>> (length - i - 1) ) & 1) == 1);
+      }
+    };
+
+    _this.getLengthInBits = function() {
+      return _length;
+    };
+
+    _this.putBit = function(bit) {
+
+      var bufIndex = Math.floor(_length / 8);
+      if (_buffer.length <= bufIndex) {
+        _buffer.push(0);
+      }
+
+      if (bit) {
+        _buffer[bufIndex] |= (0x80 >>> (_length % 8) );
+      }
+
+      _length += 1;
+    };
+
+    return _this;
+  };
+
+  //---------------------------------------------------------------------
+  // qrNumber
+  //---------------------------------------------------------------------
+
+  var qrNumber = function(data) {
+
+    var _mode = QRMode.MODE_NUMBER;
+    var _data = data;
+
+    var _this = {};
+
+    _this.getMode = function() {
+      return _mode;
+    };
+
+    _this.getLength = function(buffer) {
+      return _data.length;
+    };
+
+    _this.write = function(buffer) {
+
+      var data = _data;
+
+      var i = 0;
+
+      while (i + 2 < data.length) {
+        buffer.put(strToNum(data.substring(i, i + 3) ), 10);
+        i += 3;
+      }
+
+      if (i < data.length) {
+        if (data.length - i == 1) {
+          buffer.put(strToNum(data.substring(i, i + 1) ), 4);
+        } else if (data.length - i == 2) {
+          buffer.put(strToNum(data.substring(i, i + 2) ), 7);
+        }
+      }
+    };
+
+    var strToNum = function(s) {
+      var num = 0;
+      for (var i = 0; i < s.length; i += 1) {
+        num = num * 10 + chatToNum(s.charAt(i) );
+      }
+      return num;
+    };
+
+    var chatToNum = function(c) {
+      if ('0' <= c && c <= '9') {
+        return c.charCodeAt(0) - '0'.charCodeAt(0);
+      }
+      throw 'illegal char :' + c;
+    };
+
+    return _this;
+  };
+
+  //---------------------------------------------------------------------
+  // qrAlphaNum
+  //---------------------------------------------------------------------
+
+  var qrAlphaNum = function(data) {
+
+    var _mode = QRMode.MODE_ALPHA_NUM;
+    var _data = data;
+
+    var _this = {};
+
+    _this.getMode = function() {
+      return _mode;
+    };
+
+    _this.getLength = function(buffer) {
+      return _data.length;
+    };
+
+    _this.write = function(buffer) {
+
+      var s = _data;
+
+      var i = 0;
+
+      while (i + 1 < s.length) {
+        buffer.put(
+          getCode(s.charAt(i) ) * 45 +
+          getCode(s.charAt(i + 1) ), 11);
+        i += 2;
+      }
+
+      if (i < s.length) {
+        buffer.put(getCode(s.charAt(i) ), 6);
+      }
+    };
+
+    var getCode = function(c) {
+
+      if ('0' <= c && c <= '9') {
+        return c.charCodeAt(0) - '0'.charCodeAt(0);
+      } else if ('A' <= c && c <= 'Z') {
+        return c.charCodeAt(0) - 'A'.charCodeAt(0) + 10;
+      } else {
+        switch (c) {
+        case ' ' : return 36;
+        case '$' : return 37;
+        case '%' : return 38;
+        case '*' : return 39;
+        case '+' : return 40;
+        case '-' : return 41;
+        case '.' : return 42;
+        case '/' : return 43;
+        case ':' : return 44;
+        default :
+          throw 'illegal char :' + c;
+        }
+      }
+    };
+
+    return _this;
+  };
+
+  //---------------------------------------------------------------------
+  // qr8BitByte
+  //---------------------------------------------------------------------
+
+  var qr8BitByte = function(data) {
+
+    var _mode = QRMode.MODE_8BIT_BYTE;
+    var _data = data;
+    var _bytes = qrcode.stringToBytes(data);
+
+    var _this = {};
+
+    _this.getMode = function() {
+      return _mode;
+    };
+
+    _this.getLength = function(buffer) {
+      return _bytes.length;
+    };
+
+    _this.write = function(buffer) {
+      for (var i = 0; i < _bytes.length; i += 1) {
+        buffer.put(_bytes[i], 8);
+      }
+    };
+
+    return _this;
+  };
+
+  //---------------------------------------------------------------------
+  // qrKanji
+  //---------------------------------------------------------------------
+
+  var qrKanji = function(data) {
+
+    var _mode = QRMode.MODE_KANJI;
+    var _data = data;
+
+    var stringToBytes = qrcode.stringToBytesFuncs['SJIS'];
+    if (!stringToBytes) {
+      throw 'sjis not supported.';
+    }
+    !function(c, code) {
+      // self test for sjis support.
+      var test = stringToBytes(c);
+      if (test.length != 2 || ( (test[0] << 8) | test[1]) != code) {
+        throw 'sjis not supported.';
+      }
+    }('\u53cb', 0x9746);
+
+    var _bytes = stringToBytes(data);
+
+    var _this = {};
+
+    _this.getMode = function() {
+      return _mode;
+    };
+
+    _this.getLength = function(buffer) {
+      return ~~(_bytes.length / 2);
+    };
+
+    _this.write = function(buffer) {
+
+      var data = _bytes;
+
+      var i = 0;
+
+      while (i + 1 < data.length) {
+
+        var c = ( (0xff & data[i]) << 8) | (0xff & data[i + 1]);
+
+        if (0x8140 <= c && c <= 0x9FFC) {
+          c -= 0x8140;
+        } else if (0xE040 <= c && c <= 0xEBBF) {
+          c -= 0xC140;
+        } else {
+          throw 'illegal char at ' + (i + 1) + '/' + c;
+        }
+
+        c = ( (c >>> 8) & 0xff) * 0xC0 + (c & 0xff);
+
+        buffer.put(c, 13);
+
+        i += 2;
+      }
+
+      if (i < data.length) {
+        throw 'illegal char at ' + (i + 1);
+      }
+    };
+
+    return _this;
+  };
+
+  //=====================================================================
+  // GIF Support etc.
+  //
+
+  //---------------------------------------------------------------------
+  // byteArrayOutputStream
+  //---------------------------------------------------------------------
+
+  var byteArrayOutputStream = function() {
+
+    var _bytes = [];
+
+    var _this = {};
+
+    _this.writeByte = function(b) {
+      _bytes.push(b & 0xff);
+    };
+
+    _this.writeShort = function(i) {
+      _this.writeByte(i);
+      _this.writeByte(i >>> 8);
+    };
+
+    _this.writeBytes = function(b, off, len) {
+      off = off || 0;
+      len = len || b.length;
+      for (var i = 0; i < len; i += 1) {
+        _this.writeByte(b[i + off]);
+      }
+    };
+
+    _this.writeString = function(s) {
+      for (var i = 0; i < s.length; i += 1) {
+        _this.writeByte(s.charCodeAt(i) );
+      }
+    };
+
+    _this.toByteArray = function() {
+      return _bytes;
+    };
+
+    _this.toString = function() {
+      var s = '';
+      s += '[';
+      for (var i = 0; i < _bytes.length; i += 1) {
+        if (i > 0) {
+          s += ',';
+        }
+        s += _bytes[i];
+      }
+      s += ']';
+      return s;
+    };
+
+    return _this;
+  };
+
+  //---------------------------------------------------------------------
+  // base64EncodeOutputStream
+  //---------------------------------------------------------------------
+
+  var base64EncodeOutputStream = function() {
+
+    var _buffer = 0;
+    var _buflen = 0;
+    var _length = 0;
+    var _base64 = '';
+
+    var _this = {};
+
+    var writeEncoded = function(b) {
+      _base64 += String.fromCharCode(encode(b & 0x3f) );
+    };
+
+    var encode = function(n) {
+      if (n < 0) {
+        // error.
+      } else if (n < 26) {
+        return 0x41 + n;
+      } else if (n < 52) {
+        return 0x61 + (n - 26);
+      } else if (n < 62) {
+        return 0x30 + (n - 52);
+      } else if (n == 62) {
+        return 0x2b;
+      } else if (n == 63) {
+        return 0x2f;
+      }
+      throw 'n:' + n;
+    };
+
+    _this.writeByte = function(n) {
+
+      _buffer = (_buffer << 8) | (n & 0xff);
+      _buflen += 8;
+      _length += 1;
+
+      while (_buflen >= 6) {
+        writeEncoded(_buffer >>> (_buflen - 6) );
+        _buflen -= 6;
+      }
+    };
+
+    _this.flush = function() {
+
+      if (_buflen > 0) {
+        writeEncoded(_buffer << (6 - _buflen) );
+        _buffer = 0;
+        _buflen = 0;
+      }
+
+      if (_length % 3 != 0) {
+        // padding
+        var padlen = 3 - _length % 3;
+        for (var i = 0; i < padlen; i += 1) {
+          _base64 += '=';
+        }
+      }
+    };
+
+    _this.toString = function() {
+      return _base64;
+    };
+
+    return _this;
+  };
+
+  //---------------------------------------------------------------------
+  // base64DecodeInputStream
+  //---------------------------------------------------------------------
+
+  var base64DecodeInputStream = function(str) {
+
+    var _str = str;
+    var _pos = 0;
+    var _buffer = 0;
+    var _buflen = 0;
+
+    var _this = {};
+
+    _this.read = function() {
+
+      while (_buflen < 8) {
+
+        if (_pos >= _str.length) {
+          if (_buflen == 0) {
+            return -1;
+          }
+          throw 'unexpected end of file./' + _buflen;
+        }
+
+        var c = _str.charAt(_pos);
+        _pos += 1;
+
+        if (c == '=') {
+          _buflen = 0;
+          return -1;
+        } else if (c.match(/^\s$/) ) {
+          // ignore if whitespace.
+          continue;
+        }
+
+        _buffer = (_buffer << 6) | decode(c.charCodeAt(0) );
+        _buflen += 6;
+      }
+
+      var n = (_buffer >>> (_buflen - 8) ) & 0xff;
+      _buflen -= 8;
+      return n;
+    };
+
+    var decode = function(c) {
+      if (0x41 <= c && c <= 0x5a) {
+        return c - 0x41;
+      } else if (0x61 <= c && c <= 0x7a) {
+        return c - 0x61 + 26;
+      } else if (0x30 <= c && c <= 0x39) {
+        return c - 0x30 + 52;
+      } else if (c == 0x2b) {
+        return 62;
+      } else if (c == 0x2f) {
+        return 63;
+      } else {
+        throw 'c:' + c;
+      }
+    };
+
+    return _this;
+  };
+
+  //---------------------------------------------------------------------
+  // gifImage (B/W)
+  //---------------------------------------------------------------------
+
+  var gifImage = function(width, height) {
+
+    var _width = width;
+    var _height = height;
+    var _data = new Array(width * height);
+
+    var _this = {};
+
+    _this.setPixel = function(x, y, pixel) {
+      _data[y * _width + x] = pixel;
+    };
+
+    _this.write = function(out) {
+
+      //---------------------------------
+      // GIF Signature
+
+      out.writeString('GIF87a');
+
+      //---------------------------------
+      // Screen Descriptor
+
+      out.writeShort(_width);
+      out.writeShort(_height);
+
+      out.writeByte(0x80); // 2bit
+      out.writeByte(0);
+      out.writeByte(0);
+
+      //---------------------------------
+      // Global Color Map
+
+      // black
+      out.writeByte(0x00);
+      out.writeByte(0x00);
+      out.writeByte(0x00);
+
+      // white
+      out.writeByte(0xff);
+      out.writeByte(0xff);
+      out.writeByte(0xff);
+
+      //---------------------------------
+      // Image Descriptor
+
+      out.writeString(',');
+      out.writeShort(0);
+      out.writeShort(0);
+      out.writeShort(_width);
+      out.writeShort(_height);
+      out.writeByte(0);
+
+      //---------------------------------
+      // Local Color Map
+
+      //---------------------------------
+      // Raster Data
+
+      var lzwMinCodeSize = 2;
+      var raster = getLZWRaster(lzwMinCodeSize);
+
+      out.writeByte(lzwMinCodeSize);
+
+      var offset = 0;
+
+      while (raster.length - offset > 255) {
+        out.writeByte(255);
+        out.writeBytes(raster, offset, 255);
+        offset += 255;
+      }
+
+      out.writeByte(raster.length - offset);
+      out.writeBytes(raster, offset, raster.length - offset);
+      out.writeByte(0x00);
+
+      //---------------------------------
+      // GIF Terminator
+      out.writeString(';');
+    };
+
+    var bitOutputStream = function(out) {
+
+      var _out = out;
+      var _bitLength = 0;
+      var _bitBuffer = 0;
+
+      var _this = {};
+
+      _this.write = function(data, length) {
+
+        if ( (data >>> length) != 0) {
+          throw 'length over';
+        }
+
+        while (_bitLength + length >= 8) {
+          _out.writeByte(0xff & ( (data << _bitLength) | _bitBuffer) );
+          length -= (8 - _bitLength);
+          data >>>= (8 - _bitLength);
+          _bitBuffer = 0;
+          _bitLength = 0;
+        }
+
+        _bitBuffer = (data << _bitLength) | _bitBuffer;
+        _bitLength = _bitLength + length;
+      };
+
+      _this.flush = function() {
+        if (_bitLength > 0) {
+          _out.writeByte(_bitBuffer);
+        }
+      };
+
+      return _this;
+    };
+
+    var getLZWRaster = function(lzwMinCodeSize) {
+
+      var clearCode = 1 << lzwMinCodeSize;
+      var endCode = (1 << lzwMinCodeSize) + 1;
+      var bitLength = lzwMinCodeSize + 1;
+
+      // Setup LZWTable
+      var table = lzwTable();
+
+      for (var i = 0; i < clearCode; i += 1) {
+        table.add(String.fromCharCode(i) );
+      }
+      table.add(String.fromCharCode(clearCode) );
+      table.add(String.fromCharCode(endCode) );
+
+      var byteOut = byteArrayOutputStream();
+      var bitOut = bitOutputStream(byteOut);
+
+      // clear code
+      bitOut.write(clearCode, bitLength);
+
+      var dataIndex = 0;
+
+      var s = String.fromCharCode(_data[dataIndex]);
+      dataIndex += 1;
+
+      while (dataIndex < _data.length) {
+
+        var c = String.fromCharCode(_data[dataIndex]);
+        dataIndex += 1;
+
+        if (table.contains(s + c) ) {
+
+          s = s + c;
+
+        } else {
+
+          bitOut.write(table.indexOf(s), bitLength);
+
+          if (table.size() < 0xfff) {
+
+            if (table.size() == (1 << bitLength) ) {
+              bitLength += 1;
+            }
+
+            table.add(s + c);
+          }
+
+          s = c;
+        }
+      }
+
+      bitOut.write(table.indexOf(s), bitLength);
+
+      // end code
+      bitOut.write(endCode, bitLength);
+
+      bitOut.flush();
+
+      return byteOut.toByteArray();
+    };
+
+    var lzwTable = function() {
+
+      var _map = {};
+      var _size = 0;
+
+      var _this = {};
+
+      _this.add = function(key) {
+        if (_this.contains(key) ) {
+          throw 'dup key:' + key;
+        }
+        _map[key] = _size;
+        _size += 1;
+      };
+
+      _this.size = function() {
+        return _size;
+      };
+
+      _this.indexOf = function(key) {
+        return _map[key];
+      };
+
+      _this.contains = function(key) {
+        return typeof _map[key] != 'undefined';
+      };
+
+      return _this;
+    };
+
+    return _this;
+  };
+
+  var createDataURL = function(width, height, getPixel) {
+    var gif = gifImage(width, height);
+    for (var y = 0; y < height; y += 1) {
+      for (var x = 0; x < width; x += 1) {
+        gif.setPixel(x, y, getPixel(x, y) );
+      }
+    }
+
+    var b = byteArrayOutputStream();
+    gif.write(b);
+
+    var base64 = base64EncodeOutputStream();
+    var bytes = b.toByteArray();
+    for (var i = 0; i < bytes.length; i += 1) {
+      base64.writeByte(bytes[i]);
+    }
+    base64.flush();
+
+    return 'data:image/gif;base64,' + base64;
+  };
+
+  //---------------------------------------------------------------------
+  // returns qrcode function.
+
+  return qrcode;
+}();
+
+// multibyte support
+!function() {
+
+  qrcode.stringToBytesFuncs['UTF-8'] = function(s) {
+    // http://stackoverflow.com/questions/18729405/how-to-convert-utf8-string-to-byte-array
+    function toUTF8Array(str) {
+      var utf8 = [];
+      for (var i=0; i < str.length; i++) {
+        var charcode = str.charCodeAt(i);
+        if (charcode < 0x80) utf8.push(charcode);
+        else if (charcode < 0x800) {
+          utf8.push(0xc0 | (charcode >> 6),
+              0x80 | (charcode & 0x3f));
+        }
+        else if (charcode < 0xd800 || charcode >= 0xe000) {
+          utf8.push(0xe0 | (charcode >> 12),
+              0x80 | ((charcode>>6) & 0x3f),
+              0x80 | (charcode & 0x3f));
+        }
+        // surrogate pair
+        else {
+          i++;
+          // UTF-16 encodes 0x10000-0x10FFFF by
+          // subtracting 0x10000 and splitting the
+          // 20 bits of 0x0-0xFFFFF into two halves
+          charcode = 0x10000 + (((charcode & 0x3ff)<<10)
+            | (str.charCodeAt(i) & 0x3ff));
+          utf8.push(0xf0 | (charcode >>18),
+              0x80 | ((charcode>>12) & 0x3f),
+              0x80 | ((charcode>>6) & 0x3f),
+              0x80 | (charcode & 0x3f));
+        }
+      }
+      return utf8;
+    }
+    return toUTF8Array(s);
+  };
+
+}();
+
+(function (factory) {
+  if (typeof define === 'function' && define.amd) {
+      define([], factory);
+  } else if (typeof exports === 'object') {
+      module.exports = factory();
+  }
+}(function () {
+    return qrcode;
+}));
+
+
+function generateQRDataURL(text, size) {
+  try {
+    // typeNumber 4 supporte bien les textes courts type "LS34:e1"
+    var typeNumber = 4;
+    var errorCorrectionLevel = 'M';
+    var qr = qrcode(typeNumber, errorCorrectionLevel);
+    qr.addData(text);
+    qr.make();
+    var moduleCount = qr.getModuleCount();
+    var cellSize = Math.floor(size / (moduleCount + 4));
+    var margin = Math.floor((size - moduleCount * cellSize) / 2);
+    var canvas = document.createElement('canvas');
+    canvas.width = size;
+    canvas.height = size;
+    var ctx = canvas.getContext('2d');
+    // Fond blanc
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, size, size);
+    // Modules noirs
+    ctx.fillStyle = '#000000';
+    for (var row = 0; row < moduleCount; row++) {
+      for (var col = 0; col < moduleCount; col++) {
+        if (qr.isDark(row, col)) {
+          ctx.fillRect(
+            margin + col * cellSize,
+            margin + row * cellSize,
+            cellSize,
+            cellSize
+          );
+        }
+      }
+    }
+    return canvas.toDataURL('image/png');
+  } catch(e) {
+    console.error('QR generation error:', e);
+    return null;
+  }
+}
+
+</script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
 :root{
-  --bg:#ffffff;
-  --bg2:#f5f5f5;
-  --bg3:#eeeeee;
-  --border:#dddddd;
-  --blue:#0055cc;
-  --gold:#8B6914;
-  --text:#111111;
-  --text2:#555555;
-  --text3:#888888;
-  --red:#cc0000;
-  --green:#006600;
-  --cyan:#0055cc;
+  --bg:#ffffff;--bg2:#f5f5f5;--bg3:#eeeeee;
+  --border:#dddddd;--blue:#0055cc;--gold:#8B6914;
+  --text:#111111;--text2:#555555;--text3:#888888;
+  --red:#cc0000;--green:#006600;
 }
 html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,sans-serif;font-size:14px;overflow:hidden;}
-.app{display:flex;flex-direction:column;height:100vh;height:100svh;}
+.app{display:flex;flex-direction:column;height:100svh;height:100vh;}
 .screen{display:none;flex:1;flex-direction:column;overflow:hidden;min-height:0;}
 .screen.active{display:flex;}
-
-/* HEADER */
 .hdr{flex-shrink:0;background:var(--bg);border-bottom:2px solid var(--blue);padding:12px 15px;display:flex;align-items:center;gap:10px;}
-.logo{font-size:20px;font-weight:900;letter-spacing:-0.5px;color:var(--text);}
+.logo{font-size:20px;font-weight:900;color:var(--text);}
 .logo span{color:var(--blue);}
 .hdr-title{font-size:16px;font-weight:800;flex:1;color:var(--text);}
 .hdr-back{background:none;border:none;color:var(--blue);font-size:26px;cursor:pointer;line-height:1;padding:0 4px;}
 .hdr-btn{background:var(--blue);border:none;border-radius:8px;color:#fff;font-size:12px;font-weight:900;padding:7px 14px;cursor:pointer;}
-
-/* SCROLL */
 .scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:13px;}
-
-/* BOTTOM NAV */
-.bnav{flex-shrink:0;background:var(--bg);border-top:2px solid var(--border);display:flex;padding-bottom:max(12px, env(safe-area-inset-bottom));}
+.bnav{flex-shrink:0;background:var(--bg);border-top:2px solid var(--border);display:flex;padding-bottom:max(10px,env(safe-area-inset-bottom));}
 .ntab{flex:1;padding:11px 4px 9px;background:none;border:none;color:var(--text3);cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:11px;font-family:inherit;text-transform:uppercase;letter-spacing:0.5px;font-weight:600;}
 .ntab.on{color:var(--blue);}
 .ntab-icon{font-size:22px;line-height:1;}
-
-/* BOTTOM BAR */
 .bbar{flex-shrink:0;background:var(--bg);border-top:2px solid var(--border);padding:10px 13px;display:flex;gap:9px;}
-.btn{flex:1;padding:13px;border:none;border-radius:8px;font-size:13px;font-weight:900;cursor:pointer;text-transform:uppercase;letter-spacing:0.5px;}
+.btn{flex:1;padding:13px;border:none;border-radius:8px;font-size:13px;font-weight:900;cursor:pointer;text-transform:uppercase;}
 .btn-d{background:var(--bg2);border:1px solid var(--border);color:var(--text);}
 .btn-c{background:var(--blue);color:#fff;}
-
-/* CARDS */
+.btn-scan{background:var(--green);color:#fff;}
 .card{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:11px;box-shadow:0 1px 3px rgba(0,0,0,0.06);}
 .ctitle{font-size:11px;font-weight:700;color:var(--blue);letter-spacing:2px;text-transform:uppercase;margin-bottom:12px;display:flex;align-items:center;gap:8px;}
 .ctitle::after{content:'';flex:1;height:1px;background:var(--border);}
-
-/* FIELDS */
 .g2{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:9px;}
 .g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:9px;}
 .fg{display:flex;flex-direction:column;gap:4px;margin-bottom:9px;}
@@ -65,61 +2386,43 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
 .fg label{font-size:10px;color:var(--text2);letter-spacing:1px;text-transform:uppercase;}
 .fg input,.fg select,.fg textarea{background:var(--bg2);border:1px solid var(--border);border-radius:7px;color:var(--text);font-size:14px;padding:9px 10px;outline:none;width:100%;font-family:inherit;}
 .fg input:focus,.fg select:focus,.fg textarea:focus{border-color:var(--blue);}
-
-/* TOGGLE */
 .trow{display:flex;gap:7px;}
-.tbtn{flex:1;padding:9px;background:var(--bg2);border:1px solid var(--border);border-radius:7px;color:var(--text2);font-size:11px;cursor:pointer;text-align:center;font-family:inherit;transition:all 0.15s;}
+.tbtn{flex:1;padding:9px;background:var(--bg2);border:1px solid var(--border);border-radius:7px;color:var(--text2);font-size:11px;cursor:pointer;text-align:center;font-family:inherit;}
 .tbtn.on{background:rgba(0,85,204,0.08);border-color:var(--blue);color:var(--blue);font-weight:700;}
-
-/* SECTIONS */
 .sh{font-size:13px;font-weight:900;color:var(--text);background:var(--bg2);border-left:3px solid var(--gold);padding:7px 11px;border-radius:0 7px 7px 0;margin-bottom:9px;margin-top:4px;text-transform:uppercase;letter-spacing:1px;}
 .sbh{font-size:10px;color:var(--text3);letter-spacing:2px;text-transform:uppercase;margin:9px 0 7px;padding-bottom:3px;border-bottom:1px solid var(--border);}
-
-/* ITEMS */
 .irow{display:flex;align-items:flex-start;gap:9px;padding:8px 0;border-bottom:1px solid var(--border);}
 .irow:last-child{border-bottom:none;}
-.ick{width:22px;height:22px;min-width:22px;background:var(--bg2);border:2px solid var(--border);border-radius:5px;cursor:pointer;display:flex;align-items:center;justify-content:center;margin-top:1px;user-select:none;transition:all 0.15s;}
+.ick{width:22px;height:22px;min-width:22px;background:var(--bg2);border:2px solid var(--border);border-radius:5px;cursor:pointer;display:flex;align-items:center;justify-content:center;margin-top:1px;user-select:none;}
 .ick.on{background:var(--blue);border-color:var(--blue);}
 .ick.on::after{content:'✓';color:#fff;font-size:13px;font-weight:900;}
 .icnt{flex:1;min-width:0;}
 .iname{font-size:13px;color:var(--text);line-height:1.3;}
 .iname.on{color:var(--blue);font-weight:600;}
 .iaccs{display:flex;flex-wrap:wrap;gap:4px;margin-top:5px;}
-.chip{display:flex;align-items:center;gap:3px;background:var(--bg2);border:1px solid var(--border);border-radius:20px;padding:3px 8px 3px 5px;font-size:11px;color:var(--text2);cursor:pointer;user-select:none;transition:all 0.15s;}
+.chip{display:flex;align-items:center;gap:3px;background:var(--bg2);border:1px solid var(--border);border-radius:20px;padding:3px 8px 3px 5px;font-size:11px;color:var(--text2);cursor:pointer;user-select:none;}
 .chip.on{background:rgba(0,85,204,0.08);border-color:var(--blue);color:var(--blue);}
-.cdot{width:7px;height:7px;border-radius:50%;background:var(--border);min-width:7px;transition:background 0.15s;}
+.cdot{width:7px;height:7px;border-radius:50%;background:var(--border);min-width:7px;}
 .chip.on .cdot{background:var(--blue);}
 .iqty{display:flex;align-items:center;gap:5px;}
 .qb{width:28px;height:28px;background:var(--bg2);border:1px solid var(--border);border-radius:5px;color:var(--text);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;user-select:none;}
-.qb:active{border-color:var(--blue);}
 .qv{font-size:15px;min-width:20px;text-align:center;color:var(--text);}
 .qv.on{color:var(--blue);font-weight:700;}
-
-/* SN BADGE */
 .sn-badge{display:inline-flex;align-items:center;gap:4px;background:rgba(0,85,204,0.06);border:1px solid rgba(0,85,204,0.2);border-radius:5px;padding:2px 7px;font-size:10px;color:var(--blue);cursor:pointer;margin-top:4px;}
-
-/* SIGNATURE */
 .sigw{background:#fff;border-radius:7px;overflow:hidden;position:relative;border:2px solid var(--border);}
 .sigw.on{border-color:var(--blue);}
 #sigC{display:block;width:100%;height:140px;touch-action:none;cursor:crosshair;}
 .sigh{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:var(--text3);font-size:13px;pointer-events:none;white-space:nowrap;}
 .sigclr{position:absolute;top:7px;right:7px;background:rgba(0,0,0,0.05);border:1px solid var(--border);border-radius:5px;padding:3px 9px;font-size:11px;cursor:pointer;color:var(--text2);}
-
-/* ANOMALIES */
 .anomalie-item{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:10px;margin-bottom:8px;position:relative;}
 .anomalie-img{width:100%;max-height:180px;object-fit:cover;border-radius:5px;margin-bottom:6px;}
 .anomalie-del{position:absolute;top:8px;right:8px;background:rgba(204,0,0,0.1);border:1px solid rgba(204,0,0,0.3);border-radius:5px;padding:3px 8px;font-size:11px;color:var(--red);cursor:pointer;}
 .photo-btn{display:flex;align-items:center;justify-content:center;gap:8px;padding:11px;background:var(--bg2);border:1px dashed var(--border);border-radius:8px;cursor:pointer;color:var(--text2);font-size:13px;width:100%;}
-.photo-btn:active{border-color:var(--blue);color:var(--blue);}
-
-/* TEST MATERIEL */
 .test-row{display:flex;gap:9px;margin-top:4px;}
-.test-btn{flex:1;display:flex;align-items:center;gap:8px;padding:11px;background:var(--bg2);border:2px solid var(--border);border-radius:8px;cursor:pointer;font-size:13px;color:var(--text2);transition:all 0.15s;}
+.test-btn{flex:1;display:flex;align-items:center;gap:8px;padding:11px;background:var(--bg2);border:2px solid var(--border);border-radius:8px;cursor:pointer;font-size:13px;color:var(--text2);}
 .test-btn.on-ok{background:rgba(0,102,0,0.06);border-color:var(--green);color:var(--green);}
 .test-btn.on-no{background:rgba(204,0,0,0.06);border-color:var(--red);color:var(--red);}
 .test-icon{font-size:20px;}
-
-/* LIST CARDS */
 .lcard{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:13px 14px;margin-bottom:9px;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,0.05);}
 .lcard:active{border-color:var(--blue);}
 .ltop{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:5px;}
@@ -130,14 +2433,24 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
 .lb{flex:1;padding:8px;border-radius:6px;border:1px solid var(--border);font-size:11px;cursor:pointer;text-align:center;background:var(--bg2);color:var(--text);font-family:inherit;}
 .lb-del{background:rgba(204,0,0,0.05);border-color:rgba(204,0,0,0.2);color:var(--red);}
 .lb-ok{background:rgba(0,85,204,0.05);border-color:rgba(0,85,204,0.2);color:var(--blue);}
-
-/* EMPTY */
 .empty{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:50vh;gap:12px;text-align:center;padding:20px;}
 .ei{font-size:50px;opacity:0.2;}
 .et{font-size:17px;font-weight:900;color:var(--text3);}
 .es{font-size:12px;color:var(--text3);line-height:1.6;}
-
-/* MODAL */
+/* SCANNER */
+.scanner-overlay{display:none;position:fixed;inset:0;background:#000;z-index:1000;flex-direction:column;}
+.scanner-overlay.open{display:flex;}
+.scanner-hdr{background:#000;padding:15px;display:flex;align-items:center;justify-content:space-between;}
+.scanner-title{color:#fff;font-size:16px;font-weight:800;}
+.scanner-close{background:none;border:1px solid #fff;border-radius:20px;color:#fff;padding:5px 14px;font-size:13px;cursor:pointer;}
+#qr-reader{flex:1;width:100%;}
+.scanner-hint{background:#000;padding:12px;text-align:center;color:#aaa;font-size:12px;}
+.scan-result-toast{position:absolute;bottom:80px;left:50%;transform:translateX(-50%);background:var(--green);color:#fff;padding:12px 24px;border-radius:30px;font-size:14px;font-weight:700;white-space:nowrap;opacity:0;transition:opacity 0.3s;}
+.scan-result-toast.show{opacity:1;}
+/* QR CODE MODAL */
+.qr-display{display:flex;flex-direction:column;align-items:center;gap:10px;padding:10px 0;}
+#qrcode-render{background:#fff;padding:10px;border-radius:8px;border:1px solid var(--border);}
+/* MODALS */
 .mbg{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:900;align-items:flex-end;justify-content:center;}
 .mbg.open{display:flex;}
 .modal{background:var(--bg);border:1px solid var(--border);border-radius:16px 16px 0 0;padding:20px 17px 24px;width:100%;max-width:560px;box-shadow:0 -4px 20px rgba(0,0,0,0.1);}
@@ -147,8 +2460,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
 .mcancel{flex:1;padding:11px;background:var(--bg2);border:1px solid var(--border);border-radius:7px;color:var(--text2);font-size:12px;cursor:pointer;}
 .mok{flex:2;padding:11px;background:var(--blue);border:none;border-radius:7px;color:#fff;font-size:13px;font-weight:800;cursor:pointer;}
 .mok.red{background:var(--red);}
-
-/* SN MODAL */
+.mok.green{background:var(--green);}
 .sn-list{max-height:200px;overflow-y:auto;margin-bottom:10px;}
 .sn-item{display:flex;align-items:center;gap:8px;padding:8px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;margin-bottom:6px;cursor:pointer;}
 .sn-item.on{background:rgba(0,85,204,0.06);border-color:var(--blue);}
@@ -158,32 +2470,26 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
 .sn-add-row{display:flex;gap:7px;margin-top:6px;}
 .sn-add-row input{flex:1;background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:8px 10px;font-size:13px;outline:none;color:var(--text);}
 .sn-add-row input:focus{border-color:var(--blue);}
-.sn-add-btn{padding:8px 14px;background:var(--blue);border:none;border-radius:6px;color:#fff;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;}
-
-/* TOAST */
+.sn-add-btn{padding:8px 14px;background:var(--blue);border:none;border-radius:6px;color:#fff;font-size:12px;font-weight:700;cursor:pointer;}
 .toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:var(--text);color:#fff;font-size:12px;padding:10px 20px;border-radius:30px;z-index:999;opacity:0;transition:opacity 0.25s;white-space:nowrap;pointer-events:none;}
 .toast.show{opacity:1;}
 .toast.err{background:var(--red);}
 .toast.ok{background:var(--green);}
-
-/* LOAD */
 .lov{display:none;position:fixed;inset:0;background:rgba(255,255,255,0.85);z-index:800;align-items:center;justify-content:center;flex-direction:column;gap:12px;}
 .lov.open{display:flex;}
 .spin{width:36px;height:36px;border:3px solid var(--border);border-top-color:var(--blue);border-radius:50%;animation:sp 0.8s linear infinite;}
 @keyframes sp{to{transform:rotate(360deg);}}
 .slbl{font-size:12px;color:var(--text2);}
-
 @media(max-width:390px){.g2{grid-template-columns:1fr;}.g3{grid-template-columns:1fr 1fr;}}
 </style>
 </head>
 <body>
 <div class="app">
 
-<!-- HEADER -->
 <div class="hdr" id="hdr">
   <div class="logo">LS<span>34</span></div>
   <div style="flex:1"></div>
-  <button class="hdr-btn" onclick="hdrAction()" id="hdrBtn">+ Nouveau</button>
+  <button class="hdr-btn" onclick="hdrAction()">+ Nouveau</button>
 </div>
 
 <!-- FICHES LIST -->
@@ -194,8 +2500,6 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
 <!-- FICHE FORM -->
 <div id="sc-fiche-form" class="screen">
   <div class="scroll" id="fscroll">
-
-    <!-- CLIENT -->
     <div class="card">
       <div class="ctitle">Client</div>
       <div class="fg">
@@ -226,7 +2530,6 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
       </div>
     </div>
 
-    <!-- SECTIONS MATERIEL -->
     <div class="sh">Sonorisation</div>
     <div class="card">
       <div class="sbh">Materiel audio</div><div id="list_enceintes"></div>
@@ -248,44 +2551,32 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
     <div class="sh">Image</div>
     <div class="card"><div id="list_image"></div></div>
 
-    <!-- ANOMALIES -->
     <div class="card">
       <div class="ctitle">Anomalies constatees</div>
       <div id="anomalies-list"></div>
-      <button class="photo-btn" onclick="addAnomalie()">
-        📷 Ajouter une photo d'anomalie
-      </button>
+      <button class="photo-btn" onclick="addAnomalie()">📷 Ajouter une photo d'anomalie</button>
       <input type="file" id="photo-input" accept="image/*" capture="environment" style="display:none" onchange="handlePhoto(this)">
     </div>
 
-    <!-- TEST MATERIEL -->
     <div class="card">
       <div class="ctitle">Test materiel</div>
       <div class="test-row">
         <div class="test-btn" id="test-ok" onclick="setTest('ok')">
           <div class="test-icon">✅</div>
-          <div>
-            <div style="font-weight:700;font-size:13px">Teste avec le client</div>
-            <div style="font-size:11px;opacity:0.7">Materiel verifie</div>
-          </div>
+          <div><div style="font-weight:700;font-size:13px">Teste avec le client</div><div style="font-size:11px;opacity:0.7">Materiel verifie</div></div>
         </div>
         <div class="test-btn" id="test-no" onclick="setTest('no')">
           <div class="test-icon">⚠️</div>
-          <div>
-            <div style="font-weight:700;font-size:13px">Non teste avec le client</div>
-            <div style="font-size:11px;opacity:0.7">Sans verification</div>
-          </div>
+          <div><div style="font-weight:700;font-size:13px">Non teste avec le client</div><div style="font-size:11px;opacity:0.7">Sans verification</div></div>
         </div>
       </div>
     </div>
 
-    <!-- COMMENTAIRE -->
     <div class="card">
       <div class="ctitle">Commentaire</div>
       <div class="fg"><textarea id="f_com" rows="3" placeholder="Remarques..."></textarea></div>
     </div>
 
-    <!-- SIGNATURE -->
     <div class="card">
       <div class="ctitle">Signature client</div>
       <div class="sigw" id="sigW">
@@ -294,9 +2585,9 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
         <button class="sigclr" onclick="clrSig()">Effacer</button>
       </div>
     </div>
-
   </div>
   <div class="bbar">
+    <button class="btn btn-scan" onclick="openScanner()">📷 Scanner</button>
     <button class="btn btn-d" onclick="saveFiche()">Enregistrer</button>
     <button class="btn btn-c" onclick="fichePDF()">PDF</button>
   </div>
@@ -339,6 +2630,8 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
   <div class="scroll">
     <div class="card">
       <div class="ctitle">Nouveau produit</div>
+      <input type="hidden" id="p_edit_id">
+      <input type="hidden" id="p_edit_cat">
       <div class="fg"><label>Nom du produit</label><input type="text" id="p_nom" placeholder="Enceinte FBT X LITE 112A" autocomplete="off"></div>
       <div class="fg">
         <label>Categorie</label>
@@ -355,92 +2648,72 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
         </select>
       </div>
       <div class="fg"><label>Accessoires (separes par virgule)</label><input type="text" id="p_acc" placeholder="Housse, Pied, Housse pied"></div>
-      <div class="fg">
-        <label>Numeros de serie (un par ligne)</label>
-        <textarea id="p_sns" rows="4" placeholder="SN001&#10;SN002&#10;SN003"></textarea>
-      </div>
+      <div class="fg"><label>Numeros de serie (un par ligne)</label><textarea id="p_sns" rows="4" placeholder="SN001&#10;SN002&#10;SN003"></textarea></div>
     </div>
   </div>
   <div class="bbar">
-    <button class="btn btn-c" onclick="saveProd()">Ajouter le produit</button>
+    <button class="btn btn-c" id="prod-save-btn" onclick="saveProd()">Ajouter le produit</button>
   </div>
 </div>
 
-<!-- NOUVELLE CATEGORIE FORM -->
-<div id="sc-cat-form" class="screen">
-  <div class="scroll">
-    <div class="card">
-      <div class="ctitle">Nouvelle categorie</div>
-      <div class="fg"><label>Nom de la categorie</label><input type="text" id="nc_nom" placeholder="Ex: Karaoké, DJ, Structurel..." autocomplete="off"></div>
-    </div>
-  </div>
-  <div class="bbar">
-    <button class="btn btn-c" onclick="saveCat()">Creer la categorie</button>
-  </div>
-</div>
-
-<!-- NAV BAS -->
+<!-- BNAV -->
 <div class="bnav" id="bnav">
   <button class="ntab on" id="nt-fiches" onclick="goTab('fiches')"><div class="ntab-icon">📋</div>Fiches</button>
   <button class="ntab" id="nt-clients" onclick="goTab('clients')"><div class="ntab-icon">👥</div>Clients</button>
   <button class="ntab" id="nt-catalogue" onclick="goTab('catalogue')"><div class="ntab-icon">📦</div>Catalogue</button>
 </div>
+</div><!-- /app -->
+
+<!-- SCANNER OVERLAY -->
+<div class="scanner-overlay" id="scannerOverlay">
+  <div class="scanner-hdr">
+    <div class="scanner-title">📷 Scanner un produit</div>
+    <button class="scanner-close" onclick="closeScanner()">✕ Fermer</button>
+  </div>
+  <div id="qr-reader"></div>
+  <div class="scanner-hint">Pointez la caméra vers le QR code du produit</div>
+  <div class="scan-result-toast" id="scanToast"></div>
 </div>
 
-<!-- MODAL SUPPR -->
+<!-- MODALS -->
 <div class="mbg" id="delModal">
-  <div class="modal">
-    <div class="mh"></div>
-    <h2>Supprimer ?</h2>
-    <p style="color:var(--text2);font-size:13px">Cette action est irreversible.</p>
-    <div class="mbtns">
-      <button class="mcancel" onclick="closeM('delModal')">Annuler</button>
-      <button class="mok red" onclick="confirmDel()">Supprimer</button>
-    </div>
-  </div>
+  <div class="modal"><div class="mh"></div><h2>Supprimer ?</h2><p style="color:var(--text2);font-size:13px">Cette action est irreversible.</p>
+  <div class="mbtns"><button class="mcancel" onclick="closeM('delModal')">Annuler</button><button class="mok red" onclick="confirmDel()">Supprimer</button></div></div>
 </div>
 
-<!-- MODAL SN -->
 <div class="mbg" id="snModal">
-  <div class="modal">
-    <div class="mh"></div>
-    <h2 id="snModalTitle">Numeros de serie</h2>
-    <div class="sn-list" id="sn-list"></div>
-    <div class="sn-add-row">
-      <input type="text" id="sn-new" placeholder="Nouveau SN...">
-      <button class="sn-add-btn" onclick="addSNFromModal()">+ Ajouter</button>
-    </div>
-    <div class="mbtns">
-      <button class="mcancel" onclick="closeM('snModal')">Annuler</button>
-      <button class="mok" onclick="confirmSN()">Valider</button>
-    </div>
-  </div>
+  <div class="modal"><div class="mh"></div><h2 id="snModalTitle">Numeros de serie</h2>
+  <div class="sn-list" id="sn-list"></div>
+  <div class="sn-add-row"><input type="text" id="sn-new" placeholder="Nouveau SN..."><button class="sn-add-btn" onclick="addSNFromModal()">+ Ajouter</button></div>
+  <div class="mbtns"><button class="mcancel" onclick="closeM('snModal')">Annuler</button><button class="mok" onclick="confirmSN()">Valider</button></div></div>
 </div>
 
-<!-- MODAL ANOMALIE COMMENTAIRE -->
 <div class="mbg" id="anomModal">
-  <div class="modal">
-    <div class="mh"></div>
-    <h2>Description de l'anomalie</h2>
-    <div class="fg"><textarea id="anom-txt" rows="3" placeholder="Ex: Rayure sur enceinte FBT..."></textarea></div>
-    <div class="mbtns">
-      <button class="mcancel" onclick="closeM('anomModal');pendingPhoto=null">Annuler</button>
-      <button class="mok" onclick="confirmAnomalie()">Ajouter</button>
-    </div>
-  </div>
+  <div class="modal"><div class="mh"></div><h2>Description de l'anomalie</h2>
+  <div class="fg"><textarea id="anom-txt" rows="3" placeholder="Ex: Rayure sur enceinte FBT..."></textarea></div>
+  <div class="mbtns"><button class="mcancel" onclick="closeM('anomModal');pendingPhoto=null">Annuler</button><button class="mok" onclick="confirmAnomalie()">Ajouter</button></div></div>
 </div>
 
-<!-- MODAL EMAIL -->
 <div class="mbg" id="emailModal">
-  <div class="modal">
-    <div class="mh"></div>
-    <h2>Envoyer par email</h2>
-    <div class="fg"><label>Email du client</label><input type="email" id="m_email" placeholder="client@email.com"></div>
-    <div class="mbtns">
-      <button class="mcancel" onclick="closeM('emailModal')">Annuler</button>
-      <button class="mok" onclick="doEmail()">Envoyer</button>
-    </div>
-  </div>
+  <div class="modal"><div class="mh"></div><h2>Envoyer par email</h2>
+  <div class="fg"><label>Email du client</label><input type="email" id="m_email" placeholder="client@email.com"></div>
+  <div class="mbtns"><button class="mcancel" onclick="closeM('emailModal')">Annuler</button><button class="mok" onclick="doEmail()">Envoyer</button></div></div>
+</div>
+
+<div class="mbg" id="qrModal">
+  <div class="modal"><div class="mh"></div><h2 id="qrModalTitle">QR Code</h2>
+  <div class="qr-display"><div id="qrcode-render"></div><div id="qr-nom" style="font-size:12px;color:var(--text2);text-align:center"></div></div>
+  <div class="mbtns"><button class="mcancel" onclick="closeM('qrModal')">Fermer</button><button class="mok green" onclick="printQR()">Imprimer</button></div></div>
+</div>
+
+<div class="mbg" id="scanFoundModal">
+  <div class="modal"><div class="mh"></div>
+  <h2 id="sfTitle">Produit trouve !</h2>
+  <div id="sfContent" style="font-size:13px;color:var(--text2);margin-bottom:8px"></div>
+  <div class="mbtns">
+    <button class="mcancel" onclick="closeM('scanFoundModal')">Annuler</button>
+    <button class="mok" onclick="confirmScanAdd()">Ajouter ✓</button>
+  </div></div>
 </div>
 
 <div class="lov" id="lov"><div class="spin"></div><div class="slbl" id="slbl">...</div></div>
@@ -468,14 +2741,13 @@ function setFiches(f){localStorage.setItem('ls34_fiches',JSON.stringify(f));}
 function getClients(){try{return JSON.parse(localStorage.getItem('ls34_clients')||'[]');}catch{return[];}}
 function setClients(c){localStorage.setItem('ls34_clients',JSON.stringify(c));}
 
-// ══ STATE ══
 let S={},inst='sans',fId=null,cId=null,curTab='fiches';
 let delType=null,delId=null,delCat=null;
 let snItemId=null,snTempSel=[];
-let anomalies=[]; // [{photo:base64, desc:string}]
-let pendingPhoto=null;
-let testMode=null; // 'ok' | 'no' | null
+let anomalies=[],pendingPhoto=null,testMode=null;
 let emailFicheId=null;
+let html5QrScanner=null;
+let scannedItemId=null;
 
 function resetS(){
   S={};
@@ -505,34 +2777,16 @@ function setHdr(back,title){
   const h=document.getElementById('hdr');
   const labels={fiches:'Fiches de sortie',clients:'Clients',catalogue:'Catalogue'};
   const lbl=labels[title]||title||'';
-  if(back){
-    h.innerHTML=`<button class="hdr-back" onclick="goTab('${back}')">&#8249;</button><div class="hdr-title">${lbl}</div>`;
-  }else{
-    h.innerHTML=`<div class="logo">LS<span>34</span></div><div style="flex:1"></div><button class="hdr-btn" onclick="hdrAction()">+ Nouveau</button>`;
-  }
+  if(back){h.innerHTML='<button class="hdr-back" onclick="goTab(\''+back+'\')">&#8249;</button><div class="hdr-title">'+lbl+'</div>';}
+  else{h.innerHTML='<div class="logo">LS<span>34</span></div><div style="flex:1"></div><button class="hdr-btn" onclick="hdrAction()">+ Nouveau</button>';}
 }
 function hdrAction(){
   if(curTab==='fiches')openFicheForm();
   if(curTab==='clients')openClientForm();
-  if(curTab==='catalogue')showCatActions();
+  if(curTab==='catalogue')openProdForm();
 }
 
-function showCatActions(){
-  // Mini menu pour choisir entre nouvelle catégorie ou nouveau produit
-  const existing=document.getElementById('cat-action-menu');
-  if(existing){existing.remove();return;}
-  const menu=document.createElement('div');
-  menu.id='cat-action-menu';
-  menu.style.cssText='position:fixed;top:60px;right:12px;background:#fff;border:1px solid var(--border);border-radius:10px;box-shadow:0 4px 16px rgba(0,0,0,0.12);z-index:500;overflow:hidden;';
-  menu.innerHTML=`
-    <div onclick="document.getElementById('cat-action-menu').remove();openProdForm()" style="padding:13px 20px;font-size:14px;font-weight:600;color:var(--text);cursor:pointer;border-bottom:1px solid var(--border);">+ Nouveau produit</div>
-    <div onclick="document.getElementById('cat-action-menu').remove();openNewCatForm()" style="padding:13px 20px;font-size:14px;font-weight:600;color:var(--blue);cursor:pointer;">+ Nouvelle categorie</div>
-  `;
-  document.body.appendChild(menu);
-  setTimeout(()=>{document.addEventListener('click',function once(){document.getElementById('cat-action-menu')&&document.getElementById('cat-action-menu').remove();document.removeEventListener('click',once);});},100);
-}
-
-// ══ FICHES LIST ══
+// ══ FICHES ══
 function rFiches(){
   const fiches=getFiches(),el=document.getElementById('fiches-list');
   el.innerHTML='';
@@ -540,14 +2794,13 @@ function rFiches(){
   [...fiches].reverse().forEach(f=>{
     const nb=Object.values(f.state||{}).filter(s=>s.on).length;
     const d=document.createElement('div');d.className='lcard';
-    const testBadge=f.testMode==='ok'?'<span style="color:var(--green);font-size:11px">✅ Teste</span>':f.testMode==='no'?'<span style="color:var(--red);font-size:11px">⚠️ Non teste</span>':'';
-    d.innerHTML=`<div class="ltop"><div class="lnom">${f.nom||'Sans nom'}</div><span class="lbadge">N°${f.devis||'—'}</span></div><div class="lmeta"><span>📍 ${f.lieu||'—'} — 📅 ${f.date||'—'}</span><span>📦 ${nb} article${nb>1?'s':''} ${testBadge}</span></div><div class="lact"><button class="lb lb-ok" onclick="event.stopPropagation();pdfF('${f.id}')">PDF</button><button class="lb lb-ok" onclick="event.stopPropagation();openEmailForFiche('${f.id}')">Email</button><button class="lb lb-del" onclick="event.stopPropagation();askDel('fiche','${f.id}')">Suppr</button></div>`;
+    const tb=f.testMode==='ok'?'<span style="color:var(--green);font-size:11px"> ✅</span>':f.testMode==='no'?'<span style="color:var(--red);font-size:11px"> ⚠️</span>':'';
+    d.innerHTML='<div class="ltop"><div class="lnom">'+(f.nom||'Sans nom')+'</div><span class="lbadge">N°'+(f.devis||'—')+'</span></div><div class="lmeta"><span>📍 '+(f.lieu||'—')+' — 📅 '+(f.date||'—')+'</span><span>📦 '+nb+' article'+(nb>1?'s':'')+tb+'</span></div><div class="lact"><button class="lb lb-ok" onclick="event.stopPropagation();pdfF(\''+f.id+'\')">PDF</button><button class="lb lb-ok" onclick="event.stopPropagation();openEmailForFiche(\''+f.id+'\')">Email</button><button class="lb lb-del" onclick="event.stopPropagation();askDel(\'fiche\',\''+f.id+'\')">Suppr</button></div>';
     d.addEventListener('click',()=>editFiche(f.id));
     el.appendChild(d);
   });
 }
 
-// ══ FICHE FORM ══
 function openFicheForm(){
   resetS();
   ['f_nom','f_devis','f_lieu','f_ac','f_ca','f_so','f_com'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
@@ -566,13 +2819,15 @@ function editFiche(id){
     it.acc.forEach(a=>{if(S[it.id].acc[a]===undefined)S[it.id].acc[a]=false;});
     if(!S[it.id].sns)S[it.id].sns=[];
   });
-  inst=f.installMode||'sans';
-  anomalies=f.anomalies||[];
-  testMode=f.testMode||null;
-  ['f_nom','f_devis','f_lieu','f_date','f_ac','f_ca','f_so','f_com'].forEach(fId2=>{
-    const map={f_nom:'nom',f_devis:'devis',f_lieu:'lieu',f_date:'date',f_ac:'acompte',f_ca:'caution',f_so:'solde',f_com:'commentaire'};
-    const e=document.getElementById(fId2);if(e)e.value=f[map[fId2]]||'';
-  });
+  inst=f.installMode||'sans';anomalies=f.anomalies||[];testMode=f.testMode||null;
+  document.getElementById('f_nom').value=f.nom||'';
+  document.getElementById('f_devis').value=f.devis||'';
+  document.getElementById('f_lieu').value=f.lieu||'';
+  document.getElementById('f_date').value=f.date||'';
+  document.getElementById('f_ac').value=f.acompte||'';
+  document.getElementById('f_ca').value=f.caution||'';
+  document.getElementById('f_so').value=f.solde||'';
+  document.getElementById('f_com').value=f.commentaire||'';
   setInst(inst);rAllItems();clrSig();fillCSel();rAnomalies();setTest(testMode);
   if(f.signature){const img=new Image();img.onload=()=>{const ctx=sigC.getContext('2d');const dpr=window.devicePixelRatio||1;ctx.drawImage(img,0,0,sigC.width/dpr,sigC.height/dpr);hasSig=true;document.getElementById('sigH').style.display='none';document.getElementById('sigW').classList.add('on');};img.src=f.signature;}
   showSc('sc-fiche-form');setHdr('fiches',f.nom||'Modifier');
@@ -592,21 +2847,7 @@ function autoFill(id){
 }
 
 function readFiche(){
-  return{
-    nom:document.getElementById('f_nom').value.trim(),
-    devis:document.getElementById('f_devis').value.trim(),
-    lieu:document.getElementById('f_lieu').value.trim(),
-    date:document.getElementById('f_date').value,
-    acompte:document.getElementById('f_ac').value,
-    caution:document.getElementById('f_ca').value,
-    solde:document.getElementById('f_so').value,
-    commentaire:document.getElementById('f_com').value.trim(),
-    installMode:inst,
-    state:JSON.parse(JSON.stringify(S)),
-    signature:hasSig?sigC.toDataURL('image/png'):null,
-    anomalies:JSON.parse(JSON.stringify(anomalies)),
-    testMode
-  };
+  return{nom:document.getElementById('f_nom').value.trim(),devis:document.getElementById('f_devis').value.trim(),lieu:document.getElementById('f_lieu').value.trim(),date:document.getElementById('f_date').value,acompte:document.getElementById('f_ac').value,caution:document.getElementById('f_ca').value,solde:document.getElementById('f_so').value,commentaire:document.getElementById('f_com').value.trim(),installMode:inst,state:JSON.parse(JSON.stringify(S)),signature:hasSig?sigC.toDataURL('image/png'):null,anomalies:JSON.parse(JSON.stringify(anomalies)),testMode};
 }
 
 function saveFiche(silent=false){
@@ -618,44 +2859,160 @@ function saveFiche(silent=false){
   return data;
 }
 
-function fichePDF(){
-  const data=saveFiche(true);
-  showL('Generation PDF...');
-  try{openPDF(buildPDF(data),data);}
-  catch(e){console.error(e);toast('Erreur: '+e.message,true);}
-  finally{hideL();}
-}
-function pdfF(id){
-  const f=getFiches().find(x=>x.id===id);if(!f)return;
-  showL('Generation PDF...');
-  try{openPDF(buildPDF(f),f);}
-  catch(e){console.error(e);toast('Erreur: '+e.message,true);}
-  finally{hideL();}
-}
+function fichePDF(){const data=saveFiche(true);showL('Generation PDF...');try{openPDF(buildPDF(data),data);}catch(e){console.error(e);toast('Erreur: '+e.message,true);}finally{hideL();}}
+function pdfF(id){const f=getFiches().find(x=>x.id===id);if(!f)return;showL('Generation PDF...');try{openPDF(buildPDF(f),f);}catch(e){console.error(e);toast('Erreur: '+e.message,true);}finally{hideL();}}
+
 function openPDF(doc,f){
   try{
     const blob=doc.output('blob');
     const url=URL.createObjectURL(blob);
     const nom=f.nom||'fiche',dev=f.devis||'000';
-    if(navigator.canShare&&navigator.canShare({files:[new File([blob],'test.pdf',{type:'application/pdf'})]})){
-      const file=new File([blob],`LS34_${nom}_${dev}.pdf`,{type:'application/pdf'});
-      navigator.share({files:[file],title:`Fiche de sortie - ${nom}`}).catch(()=>{});
-    } else {
+    if(navigator.canShare&&navigator.canShare({files:[new File([blob],'t.pdf',{type:'application/pdf'})]})){
+      const file=new File([blob],'LS34_'+nom+'_'+dev+'.pdf',{type:'application/pdf'});
+      navigator.share({files:[file],title:'Fiche de sortie - '+nom}).catch(()=>{});
+    }else{
       const w=window.open(url,'_blank');
-      if(!w){const a=document.createElement('a');a.href=url;a.download=`LS34_${nom}_${dev}.pdf`;a.target='_blank';document.body.appendChild(a);a.click();setTimeout(()=>document.body.removeChild(a),500);}
+      if(!w){const a=document.createElement('a');a.href=url;a.download='LS34_'+nom+'_'+dev+'.pdf';a.target='_blank';document.body.appendChild(a);a.click();setTimeout(()=>document.body.removeChild(a),500);}
     }
     toast('PDF ok !',false,true);
   }catch(e){toast('Erreur PDF: '+e.message,true);}
+}
+
+// ══ SCANNER QR ══
+let scanStream=null;
+let scanInterval=null;
+
+async function openScanner(){
+  document.getElementById('scannerOverlay').classList.add('open');
+  const video=document.createElement('video');
+  video.style.cssText='width:100%;height:100%;object-fit:cover;';
+  video.setAttribute('playsinline','');
+  video.setAttribute('muted','');
+  const container=document.getElementById('qr-reader');
+  container.innerHTML='';
+  container.appendChild(video);
+  
+  try{
+    scanStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}});
+    video.srcObject=scanStream;
+    await video.play();
+    
+    // Utiliser BarcodeDetector si disponible (Android Chrome)
+    if('BarcodeDetector' in window){
+      const detector=new BarcodeDetector({formats:['qr_code']});
+      scanInterval=setInterval(async()=>{
+        try{
+          const barcodes=await detector.detect(video);
+          if(barcodes.length>0){onQRScanned(barcodes[0].rawValue);}
+        }catch(e){}
+      },300);
+    } else {
+      // Fallback : canvas + scan manuel
+      const canvas=document.createElement('canvas');
+      const ctx=canvas.getContext('2d');
+      scanInterval=setInterval(()=>{
+        if(video.readyState===video.HAVE_ENOUGH_DATA){
+          canvas.width=video.videoWidth;
+          canvas.height=video.videoHeight;
+          ctx.drawImage(video,0,0);
+          // Sans BarcodeDetector, afficher instructions
+        }
+      },500);
+      // Afficher bouton "Scanner manuellement"
+      const hint=document.getElementById('scanner-hint-txt');
+      if(hint)hint.textContent='Pointez vers le QR code. BarcodeDetector non disponible sur ce navigateur.';
+    }
+  }catch(err){
+    toast('Acces camera refuse',true);
+    closeScanner();
+  }
+}
+
+function closeScanner(){
+  if(scanInterval){clearInterval(scanInterval);scanInterval=null;}
+  if(scanStream){scanStream.getTracks().forEach(t=>t.stop());scanStream=null;}
+  document.getElementById('scannerOverlay').classList.remove('open');
+  document.getElementById('qr-reader').innerHTML='';
+}
+
+let scannedSN = null;
+
+function onQRScanned(qrData){
+  if(!qrData.startsWith('LS34:')){
+    showScanToast('QR code non reconnu');
+    return;
+  }
+  // Format: LS34:itemId ou LS34:itemId:SN
+  const parts=qrData.replace('LS34:','').split(':');
+  const itemId=parts[0];
+  const sn=parts[1]||null;
+  const cats=getCats();
+  let foundItem=null;
+  Object.values(cats).flat().forEach(it=>{if(it.id===itemId)foundItem=it;});
+  if(!foundItem){
+    showScanToast('Produit introuvable');
+    return;
+  }
+  if(navigator.vibrate)navigator.vibrate(100);
+  showScanToast('✓ '+foundItem.name+(sn?' - '+sn:''));
+  scannedItemId=itemId;
+  scannedSN=sn;
+  setTimeout(()=>{
+    closeScanner();
+    // Construire le contenu de confirmation avec accessoires
+    const accList=foundItem.acc&&foundItem.acc.length?foundItem.acc:[];
+    let content='<div style="font-weight:700;font-size:15px;margin-bottom:8px">'+foundItem.name+'</div>';
+    if(sn) content+='<div style="font-size:12px;color:var(--blue);margin-bottom:10px">SN: '+sn+'</div>';
+    if(accList.length){
+      content+='<div style="font-size:12px;color:var(--text2);margin-bottom:8px">Accessoires a cocher :</div>';
+      content+='<div id="scan-acc-list" style="display:flex;flex-direction:column;gap:6px;">';
+      accList.forEach(a=>{
+        content+='<label style="display:flex;align-items:center;gap:8px;padding:8px;background:var(--bg2);border-radius:6px;cursor:pointer;">';
+        content+='<input type="checkbox" data-acc="'+a+'" style="width:18px;height:18px;accent-color:var(--blue);">';
+        content+='<span style="font-size:13px;">'+a+'</span></label>';
+      });
+      content+='</div>';
+    }
+    document.getElementById('sfTitle').textContent='Produit trouve !';
+    document.getElementById('sfContent').innerHTML=content;
+    document.getElementById('scanFoundModal').classList.add('open');
+  },800);
+}
+
+function showScanToast(msg){
+  const t=document.getElementById('scanToast');
+  t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2000);
+}
+
+function confirmScanAdd(){
+  if(!scannedItemId)return;
+  closeM('scanFoundModal');
+  if(!S[scannedItemId])S[scannedItemId]={on:false,qty:0,acc:{},sns:[]};
+  S[scannedItemId].on=true;
+  S[scannedItemId].qty=Math.max(1,S[scannedItemId].qty+1);
+  // Ajouter le SN si scanné
+  if(scannedSN){
+    if(!S[scannedItemId].sns)S[scannedItemId].sns=[];
+    if(!S[scannedItemId].sns.includes(scannedSN))S[scannedItemId].sns.push(scannedSN);
+  }
+  // Récupérer les accessoires cochés
+  const accCheckboxes=document.querySelectorAll('#scan-acc-list input[type=checkbox]');
+  accCheckboxes.forEach(cb=>{
+    const acc=cb.getAttribute('data-acc');
+    if(acc)S[scannedItemId].acc[acc]=cb.checked;
+  });
+  rAllItems();
+  toast('Produit ajoute !',false,true);
+  scannedItemId=null;
+  scannedSN=null;
 }
 
 // ══ ITEMS ══
 function rItems(catId){
   const cats=getCats();const items=cats[catId]||[];
   const el=document.getElementById(catId);if(!el)return;el.innerHTML='';
-  if(!items.length&&catId==='list_image'){
-    el.innerHTML='<div style="font-size:12px;color:var(--text3);padding:8px 0;font-style:italic">Aucun produit — ajoutez depuis Catalogue</div>';
-    return;
-  }
+  if(!items.length){el.innerHTML='<div style="font-size:12px;color:var(--text3);padding:8px 0;font-style:italic">Aucun produit — ajoutez depuis Catalogue</div>';return;}
   items.forEach(it=>{
     if(!S[it.id])S[it.id]={on:false,qty:0,acc:{},sns:[]};
     if(!S[it.id].sns)S[it.id].sns=[];
@@ -666,7 +3023,6 @@ function rItems(catId){
     ck.addEventListener('click',()=>{s.on=!s.on;if(s.on&&s.qty===0)s.qty=1;if(!s.on)s.qty=0;rItems(catId);});
     const cnt=document.createElement('div');cnt.className='icnt';
     const nm=document.createElement('div');nm.className='iname'+(s.on?' on':'');nm.textContent=it.name;cnt.appendChild(nm);
-    // Accessoires
     if(it.acc.length){
       const ar=document.createElement('div');ar.className='iaccs';
       it.acc.forEach(a=>{
@@ -678,15 +3034,13 @@ function rItems(catId){
       });
       cnt.appendChild(ar);
     }
-    // SN badge si l'article a des SN disponibles ou sélectionnés
     if(it.sns&&it.sns.length>0){
       const snBtn=document.createElement('div');snBtn.className='sn-badge';
       const selCount=s.sns?s.sns.length:0;
-      snBtn.innerHTML='&#128290; SN ' + (selCount>0 ? '('+selCount+' selectionne'+(selCount>1?'s':'')+')' : 'a selectionner');
+      snBtn.textContent='SN ' + (selCount>0 ? '('+selCount+' sel.)' : 'a selectionner');
       snBtn.addEventListener('click',e=>{e.stopPropagation();openSNModal(it.id,it.name);});
       cnt.appendChild(snBtn);
     }
-    // Qty
     const qw=document.createElement('div');qw.className='iqty';
     const bm=document.createElement('button');bm.className='qb';bm.textContent='-';bm.addEventListener('click',e=>{e.stopPropagation();s.qty=Math.max(0,s.qty-1);s.on=s.qty>0;rItems(catId);});
     const qn=document.createElement('div');qn.className='qv'+(s.qty>0?' on':'');qn.textContent=s.qty;
@@ -695,52 +3049,10 @@ function rItems(catId){
     row.appendChild(ck);row.appendChild(cnt);row.appendChild(qw);el.appendChild(row);
   });
 }
-function rAllItems(){
-  const cats=getCats();
-  // Sections fixes
-  Object.keys(cats).forEach(catId=>{
-    const el=document.getElementById('list_'+catId.replace('list_',''));
-    // Pour les catégories fixes (avec div déjà dans le HTML)
-    if(document.getElementById(catId))rItems(catId);
-  });
-  // Sections custom
-  renderCustomCatSections();
-}
-
-function renderCustomCatSections(){
-  const customLabels=getCustomLabels();
-  const cats=getCats();
-  // Trouver ou créer le conteneur des catégories custom dans le formulaire
-  let customContainer=document.getElementById('custom-cats-container');
-  if(!customContainer){
-    customContainer=document.createElement('div');
-    customContainer.id='custom-cats-container';
-    // Insérer avant la section anomalies
-    const anomSection=document.querySelector('.card .ctitle');
-    const cards=document.querySelectorAll('#fscroll .card');
-    const lastCard=cards[cards.length-1];
-    lastCard.parentNode.insertBefore(customContainer,lastCard.previousElementSibling.previousElementSibling);
-  }
-  customContainer.innerHTML='';
-  Object.keys(customLabels).forEach(catId=>{
-    if(!cats[catId])return;
-    // Initialiser le state pour les items de cette catégorie
-    (cats[catId]||[]).forEach(it=>{
-      if(!S[it.id])S[it.id]={on:false,qty:0,acc:{},sns:[]};
-      it.acc.forEach(a=>{if(S[it.id].acc[a]===undefined)S[it.id].acc[a]=false;});
-    });
-    const sh=document.createElement('div');sh.className='sh';sh.textContent=customLabels[catId];
-    customContainer.appendChild(sh);
-    const card=document.createElement('div');card.className='card';card.style.marginBottom='11px';
-    const listDiv=document.createElement('div');listDiv.id=catId;
-    card.appendChild(listDiv);
-    customContainer.appendChild(card);
-    rItems(catId);
-  });
-}
+function rAllItems(){Object.keys(getCats()).forEach(rItems);}
 function setInst(v){inst=v;document.getElementById('t_avec').classList.toggle('on',v==='avec');document.getElementById('t_sans').classList.toggle('on',v==='sans');}
 
-// ══ NUMEROS DE SERIE ══
+// ══ SN ══
 function openSNModal(itemId,itemName){
   snItemId=itemId;
   snTempSel=S[itemId]&&S[itemId].sns?[...S[itemId].sns]:[];
@@ -749,86 +3061,56 @@ function openSNModal(itemId,itemName){
   rSNList();
   document.getElementById('snModal').classList.add('open');
 }
-
 function rSNList(){
-  const cats=getCats();
-  let item=null;
+  const cats=getCats();let item=null;
   Object.values(cats).flat().forEach(it=>{if(it.id===snItemId)item=it;});
   const allSNs=item&&item.sns?item.sns:[];
-  const el=document.getElementById('sn-list');
-  el.innerHTML='';
+  const el=document.getElementById('sn-list');el.innerHTML='';
   if(!allSNs.length){el.innerHTML='<div style="font-size:12px;color:var(--text3);padding:8px;text-align:center">Aucun SN — ajoutez-en ci-dessous</div>';return;}
   allSNs.forEach(sn=>{
     const sel=snTempSel.includes(sn);
     const d=document.createElement('div');d.className='sn-item'+(sel?' on':'');
-    d.innerHTML=`<div class="sn-ck"></div><div style="font-size:13px;font-weight:600">${sn}</div>`;
-    d.addEventListener('click',()=>{
-      if(snTempSel.includes(sn))snTempSel=snTempSel.filter(x=>x!==sn);
-      else snTempSel.push(sn);
-      rSNList();
-    });
+    d.innerHTML='<div class="sn-ck"></div><div style="font-size:13px;font-weight:600">'+sn+'</div>';
+    d.addEventListener('click',()=>{if(snTempSel.includes(sn))snTempSel=snTempSel.filter(x=>x!==sn);else snTempSel.push(sn);rSNList();});
     el.appendChild(d);
   });
 }
-
 function addSNFromModal(){
-  const val=document.getElementById('sn-new').value.trim();
-  if(!val)return;
-  // Ajouter au catalogue
+  const val=document.getElementById('sn-new').value.trim();if(!val)return;
   const cats=getCats();
-  Object.values(cats).flat().forEach(it=>{
-    if(it.id===snItemId){if(!it.sns)it.sns=[];if(!it.sns.includes(val))it.sns.push(val);}
-  });
-  setCats(cats);
-  snTempSel.push(val);
-  document.getElementById('sn-new').value='';
-  rSNList();
+  Object.values(cats).flat().forEach(it=>{if(it.id===snItemId){if(!it.sns)it.sns=[];if(!it.sns.includes(val))it.sns.push(val);}});
+  setCats(cats);snTempSel.push(val);
+  document.getElementById('sn-new').value='';rSNList();
 }
-
 function confirmSN(){
   if(!S[snItemId])return;
   S[snItemId].sns=[...snTempSel];
   closeM('snModal');
-  // Re-render la catégorie concernée
-  Object.keys(getCats()).forEach(catId=>{
-    if((getCats()[catId]||[]).find(i=>i.id===snItemId))rItems(catId);
-  });
+  Object.keys(getCats()).forEach(catId=>{if((getCats()[catId]||[]).find(i=>i.id===snItemId))rItems(catId);});
 }
 
 // ══ ANOMALIES ══
 function addAnomalie(){document.getElementById('photo-input').click();}
-
 function handlePhoto(input){
   if(!input.files||!input.files[0])return;
   const reader=new FileReader();
-  reader.onload=e=>{
-    pendingPhoto=e.target.result;
-    document.getElementById('anom-txt').value='';
-    document.getElementById('anomModal').classList.add('open');
-  };
-  reader.readAsDataURL(input.files[0]);
-  input.value='';
+  reader.onload=e=>{pendingPhoto=e.target.result;document.getElementById('anom-txt').value='';document.getElementById('anomModal').classList.add('open');};
+  reader.readAsDataURL(input.files[0]);input.value='';
 }
-
 function confirmAnomalie(){
   if(!pendingPhoto)return;
   anomalies.push({photo:pendingPhoto,desc:document.getElementById('anom-txt').value.trim()});
-  pendingPhoto=null;
-  closeM('anomModal');
-  rAnomalies();
+  pendingPhoto=null;closeM('anomModal');rAnomalies();
 }
-
 function rAnomalies(){
   const el=document.getElementById('anomalies-list');el.innerHTML='';
   anomalies.forEach((a,i)=>{
     const d=document.createElement('div');d.className='anomalie-item';
-    d.innerHTML=`<img class="anomalie-img" src="${a.photo}"><div style="font-size:13px;color:var(--text)">${a.desc||'Sans description'}</div><button class="anomalie-del" onclick="delAnomalie(${i})">✕</button>`;
+    d.innerHTML='<img class="anomalie-img" src="'+a.photo+'"><div style="font-size:13px;color:var(--text)">'+(a.desc||'Sans description')+'</div><button class="anomalie-del" onclick="delAnomalie('+i+')">✕</button>';
     el.appendChild(d);
   });
 }
 function delAnomalie(i){anomalies.splice(i,1);rAnomalies();}
-
-// ══ TEST MATERIEL ══
 function setTest(v){
   testMode=v;
   document.getElementById('test-ok').className='test-btn'+(v==='ok'?' on-ok':'');
@@ -857,7 +3139,7 @@ function rClients(){
   if(!clients.length){el.innerHTML='<div class="empty"><div class="ei">👥</div><div class="et">Aucun client</div><div class="es">Appuyez sur + Nouveau<br>pour ajouter votre premier client.</div></div>';return;}
   [...clients].reverse().forEach(c=>{
     const d=document.createElement('div');d.className='lcard';
-    d.innerHTML=`<div class="ltop"><div class="lnom">${c.nom} ${c.pre}</div></div><div class="lmeta"><span>✉️ ${c.email||'—'}</span><span>📞 ${c.tel||'—'}</span><span>📍 ${c.adr||'—'}</span><span>N° Devis: ${c.dev||'—'}</span></div><div class="lact"><button class="lb lb-ok" onclick="event.stopPropagation();editC('${c.id}')">Modifier</button><button class="lb lb-del" onclick="event.stopPropagation();askDel('client','${c.id}')">Suppr</button></div>`;
+    d.innerHTML='<div class="ltop"><div class="lnom">'+c.nom+' '+c.pre+'</div></div><div class="lmeta"><span>✉️ '+(c.email||'—')+'</span><span>📞 '+(c.tel||'—')+'</span><span>📍 '+(c.adr||'—')+'</span><span>N° Devis: '+(c.dev||'—')+'</span></div><div class="lact"><button class="lb lb-ok" onclick="event.stopPropagation();editC(\''+c.id+'\')">Modifier</button><button class="lb lb-del" onclick="event.stopPropagation();askDel(\'client\',\''+c.id+'\')">Suppr</button></div>';
     el.appendChild(d);
   });
 }
@@ -874,109 +3156,163 @@ function saveClient(){
   const clients=getClients();
   if(cId){const i=clients.findIndex(c=>c.id===cId);if(i>=0)clients[i]={...clients[i],...data,updatedAt:Date.now()};}
   else{clients.push({id:'c_'+Date.now(),createdAt:Date.now(),...data});}
-  setClients(clients);
-  toast('Client enregistre !',false,true);
-  goTab('clients');
+  setClients(clients);toast('Client enregistre !',false,true);goTab('clients');
 }
 
-// ══ NOUVELLE CATEGORIE ══
-function openNewCatForm(){
-  document.getElementById('nc_nom').value='';
-  showSc('sc-cat-form');
-  setHdr('catalogue','Nouvelle categorie');
-}
-
-function saveCat(){
-  const nom=document.getElementById('nc_nom').value.trim();
-  if(!nom){toast('Nom requis',true);return;}
-  // Créer un ID unique basé sur le nom
-  const catId='cat_'+Date.now();
-  const cats=getCats();
-  cats[catId]=[];
-  // Sauvegarder le label custom
-  const labels=getCustomLabels();
-  labels[catId]=nom;
-  setCustomLabels(labels);
-  setCats(cats);
-  toast('Categorie creee !',false,true);
-  goTab('catalogue');
-}
-
-function getCustomLabels(){try{return JSON.parse(localStorage.getItem('ls34_labels')||'{}');}catch{return {};}}
-function setCustomLabels(l){localStorage.setItem('ls34_labels',JSON.stringify(l));}
-
-function getAllLabels(){
-  return Object.assign({},CATS_LABELS,getCustomLabels());
-}
+// ══ CATALOGUE + QR ══
 function rCat(){
-  const cats=getCats(),el=document.getElementById('cat-list');
-  el.innerHTML='';
-  const labels=getAllLabels();
-  const customLabels=getCustomLabels();
+  const cats=getCats(),el=document.getElementById('cat-list');el.innerHTML='';
   Object.entries(cats).forEach(([catId,items])=>{
-    const isCustom=!!customLabels[catId];
-    const lbl=labels[catId]||catId;
-    const shWrap=document.createElement('div');
-    shWrap.style.cssText='display:flex;align-items:center;gap:8px;margin-bottom:9px;margin-top:4px;';
-    const sh=document.createElement('div');sh.className='sh';sh.style.cssText='flex:1;margin:0;';sh.textContent=lbl;
-    shWrap.appendChild(sh);
-    if(isCustom){
-      const delCatBtn=document.createElement('button');
-      delCatBtn.style.cssText='padding:5px 10px;background:rgba(204,0,0,0.08);border:1px solid rgba(204,0,0,0.2);border-radius:6px;color:var(--red);font-size:11px;cursor:pointer;white-space:nowrap;flex-shrink:0;';
-      delCatBtn.textContent='Suppr. cat.';
-      delCatBtn.addEventListener('click',()=>askDel('categorie',catId,null));
-      shWrap.appendChild(delCatBtn);
-    }
-    el.appendChild(shWrap);
-    if(!items.length){
-      const e=document.createElement('div');e.style.cssText='font-size:12px;color:var(--text3);padding:6px 0 10px;font-style:italic';
-      e.textContent='Aucun produit — appuyez sur + Nouveau';el.appendChild(e);return;
-    }
+    const sh=document.createElement('div');sh.className='sh';sh.textContent=CATS_LABELS[catId]||catId;el.appendChild(sh);
+    if(!items.length){const e=document.createElement('div');e.style.cssText='font-size:12px;color:var(--text3);padding:6px 0 10px;font-style:italic';e.textContent='Aucun produit';el.appendChild(e);return;}
     const card=document.createElement('div');card.className='card';
     items.forEach((it,idx)=>{
       const row=document.createElement('div');
-      row.style.cssText='display:flex;justify-content:space-between;align-items:flex-start;padding:8px 0;border-bottom:1px solid var(--border);';
+      row.style.cssText='display:flex;justify-content:space-between;align-items:flex-start;padding:9px 0;border-bottom:1px solid var(--border);';
       if(idx===items.length-1)row.style.borderBottom='none';
       const nm=document.createElement('div');nm.style.cssText='font-size:13px;flex:1;min-width:0;';
       nm.innerHTML='<div style="color:var(--text);font-weight:600">'+it.name+'</div>'+(it.acc.length?'<div style="font-size:11px;color:var(--text3);margin-top:2px">Acc: '+it.acc.join(', ')+'</div>':'')+(it.sns&&it.sns.length?'<div style="font-size:11px;color:var(--blue);margin-top:2px">SN: '+it.sns.join(', ')+'</div>':'');
-      const del=document.createElement('button');del.className='lb lb-del';del.style.cssText='flex:0;padding:6px 10px;white-space:nowrap;margin-left:8px;';del.textContent='Suppr';
-      del.addEventListener('click',()=>askDel('prod',it.id,catId));
-      row.appendChild(nm);row.appendChild(del);card.appendChild(row);
+      const btns=document.createElement('div');btns.style.cssText='display:flex;gap:5px;margin-left:8px;flex-shrink:0;';
+      // Bouton QR
+      const editBtn=document.createElement('button');editBtn.className='lb lb-ok';editBtn.style.cssText='padding:6px 8px;white-space:nowrap;';editBtn.textContent='Modifier';
+      editBtn.addEventListener('click',()=>editProd(it.id,catId));
+      const qrBtn=document.createElement('button');qrBtn.className='lb lb-ok';qrBtn.style.cssText='padding:6px 8px;white-space:nowrap;';qrBtn.textContent='QR';
+      qrBtn.addEventListener('click',()=>showQR(it.id,it.name));
+      const delBtn=document.createElement('button');delBtn.className='lb lb-del';delBtn.style.cssText='padding:6px 10px;white-space:nowrap;';delBtn.textContent='Suppr';
+      delBtn.addEventListener('click',()=>askDel('prod',it.id,catId));
+      btns.appendChild(editBtn);btns.appendChild(qrBtn);btns.appendChild(delBtn);
+      row.appendChild(nm);row.appendChild(btns);card.appendChild(row);
     });
     el.appendChild(card);
   });
 }
 
+function showQR(itemId,itemName){
+  document.getElementById('qrModalTitle').textContent='QR Code - '+itemName;
+  const el=document.getElementById('qrcode-render');
+  el.innerHTML='';
+  // Trouver le produit dans le catalogue
+  const cats=getCats();
+  let item=null;
+  Object.values(cats).flat().forEach(it=>{if(it.id===itemId)item=it;});
+  const sns=item&&item.sns&&item.sns.length>0?item.sns:[];
+  if(sns.length>0){
+    // 1 QR par numéro de série
+    el.style.cssText='display:flex;flex-direction:column;gap:16px;align-items:center;max-height:60vh;overflow-y:auto;padding:4px;';
+    sns.forEach(sn=>{
+      const block=document.createElement('div');
+      block.style.cssText='display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px;border:1px solid #ddd;border-radius:10px;background:#fafafa;';
+      const dataURL=generateQRDataURL('LS34:'+itemId+':'+sn, 180);
+      if(dataURL){
+        const img=document.createElement('img');
+        img.src=dataURL;img.style.cssText='width:180px;height:180px;';
+        block.appendChild(img);
+      }
+      const label=document.createElement('div');
+      label.style.cssText='font-size:13px;font-weight:700;color:#111;';
+      label.textContent=sn;
+      const sub=document.createElement('div');
+      sub.style.cssText='font-size:11px;color:#888;';
+      sub.textContent=itemName;
+      block.appendChild(label);block.appendChild(sub);
+      el.appendChild(block);
+    });
+  } else {
+    // 1 seul QR pour le produit
+    el.style.cssText='display:flex;flex-direction:column;align-items:center;gap:8px;';
+    const dataURL=generateQRDataURL('LS34:'+itemId, 200);
+    if(dataURL){
+      const img=document.createElement('img');
+      img.src=dataURL;img.style.cssText='width:200px;height:200px;border:1px solid #ddd;border-radius:8px;';
+      el.appendChild(img);
+      const label=document.createElement('div');
+      label.style.cssText='font-size:12px;color:#888;text-align:center;';
+      label.textContent=itemName;
+      el.appendChild(label);
+    } else {
+      el.innerHTML='<div style="color:red;font-size:12px">Erreur generation QR</div>';
+    }
+  }
+  document.getElementById('qrModal').classList.add('open');
+}
+
+function printQR(){
+  const qrEl=document.getElementById('qrcode-render');
+  const w=window.open('','_blank');
+  if(!w){toast('Popup bloque',true);return;}
+  const items=qrEl.querySelectorAll('img');
+  if(!items.length){toast('Aucun QR a imprimer',true);return;}
+  let body='<html><head><title>QR LS34</title><style>body{font-family:system-ui;padding:20px;}.qr-block{display:inline-block;text-align:center;margin:10px;padding:15px;border:1px solid #ddd;border-radius:8px;page-break-inside:avoid;}img{width:180px;height:180px;display:block;}h3{font-size:14px;margin:8px 0 2px;color:#111;}p{font-size:11px;color:#888;margin:0;}</style></head><body>';
+  qrEl.querySelectorAll('div').forEach(block=>{
+    const img=block.querySelector('img');
+    const labels=block.querySelectorAll('div');
+    if(!img)return;
+    const nom=labels[0]?labels[0].textContent:'';
+    const sub=labels[1]?labels[1].textContent:'';
+    body+='<div class="qr-block"><img src="'+img.src+'"><h3>'+nom+'</h3><p>'+sub+'</p></div>';
+  });
+  // Si pas de blocs, QR simple
+  if(!qrEl.querySelectorAll('div').length){
+    const img=qrEl.querySelector('img');
+    if(img) body+='<div class="qr-block"><img src="'+img.src+'"></div>';
+  }
+  body+='</body></html>';
+  w.document.write(body);
+  w.document.close();
+  setTimeout(()=>w.print(),500);
+}
+
 function openProdForm(){
   ['p_nom','p_acc','p_sns'].forEach(i=>{const e=document.getElementById(i);if(e)e.value='';});
-  // Mettre à jour le select avec les catégories custom
-  const sel=document.getElementById('p_cat');
-  const labels=getAllLabels();
-  const customLabels=getCustomLabels();
-  // Supprimer les options custom existantes et les ré-ajouter
-  Array.from(sel.options).forEach(opt=>{if(opt.dataset.custom==='1')opt.remove();});
-  Object.keys(customLabels).forEach(catId=>{
-    const opt=document.createElement('option');opt.value=catId;opt.textContent=customLabels[catId];opt.dataset.custom='1';
-    sel.appendChild(opt);
-  });
+  document.getElementById('p_edit_id').value='';
+  document.getElementById('p_edit_cat').value='';
+  document.getElementById('prod-save-btn').textContent='Ajouter le produit';
   showSc('sc-prod-form');setHdr('catalogue','Nouveau produit');
 }
 
+function editProd(itemId, catId){
+  const cats=getCats();
+  let item=null;
+  Object.values(cats).flat().forEach(it=>{if(it.id===itemId)item=it;});
+  if(!item)return;
+  document.getElementById('p_nom').value=item.name||'';
+  document.getElementById('p_acc').value=item.acc?item.acc.join(', '):'';
+  document.getElementById('p_sns').value=item.sns?item.sns.join('\n'):'';
+  document.getElementById('p_edit_id').value=itemId;
+  document.getElementById('p_edit_cat').value=catId;
+  // Mettre à jour le select catégorie
+  const sel=document.getElementById('p_cat');
+  if(sel)sel.value=catId;
+  document.getElementById('prod-save-btn').textContent='Modifier le produit';
+  showSc('sc-prod-form');setHdr('catalogue','Modifier produit');
+}
 function saveProd(){
-  const nom=document.getElementById('p_nom').value.trim();
-  if(!nom){toast('Nom requis',true);return;}
+  const nom=document.getElementById('p_nom').value.trim();if(!nom){toast('Nom requis',true);return;}
   const catId=document.getElementById('p_cat').value;
   const acc=document.getElementById('p_acc').value.trim()?document.getElementById('p_acc').value.trim().split(',').map(a=>a.trim()).filter(Boolean):[];
-  const snsRaw=document.getElementById('p_sns').value.trim();
-  const sns=snsRaw?snsRaw.split('\n').map(s=>s.trim()).filter(Boolean):[];
+  const sns=document.getElementById('p_sns').value.trim()?document.getElementById('p_sns').value.trim().split('\n').map(s=>s.trim()).filter(Boolean):[];
   const cats=getCats();
-  const newIt={id:'p_'+Date.now(),name:nom,acc,sns};
-  if(!cats[catId])cats[catId]=[];
-  cats[catId].push(newIt);
-  setCats(cats);
-  S[newIt.id]={on:false,qty:0,acc:{},sns:[]};
-  acc.forEach(a=>{S[newIt.id].acc[a]=false;});
-  toast('Produit ajoute !',false,true);
+  const editId=document.getElementById('p_edit_id').value;
+  if(editId){
+    // Modification d'un produit existant
+    Object.keys(cats).forEach(cId=>{
+      const idx=cats[cId].findIndex(i=>i.id===editId);
+      if(idx>=0){cats[cId][idx]={...cats[cId][idx],name:nom,acc,sns};}
+    });
+    setCats(cats);
+    // Mettre à jour le state aussi
+    if(S[editId]){acc.forEach(a=>{if(S[editId].acc[a]===undefined)S[editId].acc[a]=false;});}
+    toast('Produit modifie !',false,true);
+  } else {
+    // Nouveau produit
+    const newIt={id:'p_'+Date.now(),name:nom,acc,sns};
+    if(!cats[catId])cats[catId]=[];
+    cats[catId].push(newIt);
+    setCats(cats);
+    S[newIt.id]={on:false,qty:0,acc:{},sns:[]};
+    acc.forEach(a=>{S[newIt.id].acc[a]=false;});
+    toast('Produit ajoute !',false,true);
+  }
   goTab('catalogue');
 }
 
@@ -986,18 +3322,12 @@ function confirmDel(){
   if(delType==='fiche'){setFiches(getFiches().filter(f=>f.id!==delId));rFiches();}
   if(delType==='client'){setClients(getClients().filter(c=>c.id!==delId));rClients();}
   if(delType==='prod'&&delCat){const cats=getCats();cats[delCat]=(cats[delCat]||[]).filter(i=>i.id!==delId);setCats(cats);rCat();}
-  if(delType==='categorie'){
-    const cats=getCats();delete cats[delId];setCats(cats);
-    const labels=getCustomLabels();delete labels[delId];setCustomLabels(labels);
-    rCat();
-  }
   closeM('delModal');toast('Supprime');
 }
 function closeM(id){document.getElementById(id).classList.remove('open');}
 
 // ══ EMAIL ══
 function openEmailForFiche(id){emailFicheId=id;document.getElementById('m_email').value='';document.getElementById('emailModal').classList.add('open');}
-
 async function doEmail(){
   const email=document.getElementById('m_email').value.trim();
   if(!email.includes('@')){toast('Email invalide',true);return;}
@@ -1007,22 +3337,19 @@ async function doEmail(){
   try{
     const doc=buildPDF(f);
     const blob=doc.output('blob');
-    const nom=f.nom||'client';
-    const dev=f.devis||'000';
-    const subject=`Fiche de sortie LS34 - ${nom} N°${dev}`;
-    const body=`Bonjour ${nom},\n\nVeuillez trouver ci-joint la check list du materiel pour votre location.\n\nCordialement,\nLS34 Locsonodj34\n06.31.71.36.85\ncontact@locsonodj34.fr`;
-    // Partage natif iOS/Android avec PDF
-    if(navigator.canShare&&navigator.canShare({files:[new File([blob],'test.pdf',{type:'application/pdf'})]})){
-      const file=new File([blob],`LS34_${nom}_${dev}.pdf`,{type:'application/pdf'});
+    const nom=f.nom||'client',dev=f.devis||'000';
+    const subject='Fiche de sortie LS34 - '+nom+' N°'+dev;
+    const body='Bonjour '+nom+',\n\nVeuillez trouver ci-joint la check list du materiel pour votre location.\n\nCordialement,\nLS34 Locsonodj34\n06.31.71.36.85\ncontact@locsonodj34.fr';
+    if(navigator.canShare&&navigator.canShare({files:[new File([blob],'t.pdf',{type:'application/pdf'})]})){
+      const file=new File([blob],'LS34_'+nom+'_'+dev+'.pdf',{type:'application/pdf'});
       await navigator.share({files:[file],title:subject,text:body});
       toast('Partage ok !',false,true);
-    } else {
-      // Fallback mailto
-      const mailtoLink=`mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    }else{
+      const mailtoLink='mailto:'+email+'?subject='+encodeURIComponent(subject)+'&body='+encodeURIComponent(body);
       window.open(mailtoLink,'_blank');
-      // Telecharger le PDF aussi
       const url=URL.createObjectURL(blob);
-      const a=document.createElement('a');a.href=url;a.download=`LS34_${nom}_${dev}.pdf`;document.body.appendChild(a);a.click();setTimeout(()=>{document.body.removeChild(a);URL.revokeObjectURL(url);},500);
+      const a=document.createElement('a');a.href=url;a.download='LS34_'+nom+'_'+dev+'.pdf';document.body.appendChild(a);a.click();
+      setTimeout(()=>{document.body.removeChild(a);URL.revokeObjectURL(url);},500);
       toast('Email + PDF ok !',false,true);
     }
   }catch(e){console.error(e);toast('Erreur: '+e.message,true);}
@@ -1034,215 +3361,96 @@ function buildPDF(f){
   const{jsPDF}=window.jspdf;
   const W=210,H=297,ML=11,PW=188;
   const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
-
-  // Couleurs thème app (blanc/bleu/doré)
-  const BG=[255,255,255];
-  const BG2=[245,245,245];
-  const BG3=[238,238,238];
-  const BLUE=[0,85,204];
-  const GOLD=[139,105,20];
-  const TEXT=[17,17,17];
-  const TEXT2=[85,85,85];
-  const TEXT3=[136,136,136];
-  const BORDER=[221,221,221];
-  const GREEN=[0,102,0];
-  const RED=[204,0,0];
-
+  const BG=[255,255,255],BG2=[245,245,245],BLUE=[0,85,204],GOLD=[139,105,20];
+  const TEXT=[17,17,17],TEXT2=[85,85,85],TEXT3=[136,136,136],BORDER=[221,221,221];
+  const GREEN=[0,102,0],RED=[204,0,0];
   let y=0,pg=1;
   const F=(...c)=>doc.setFillColor(...c);
   const D=(...c)=>doc.setDrawColor(...c);
   const T=(...c)=>doc.setTextColor(...c);
   const B=s=>{doc.setFont('helvetica','bold');doc.setFontSize(s);};
   const N=s=>{doc.setFont('helvetica','normal');doc.setFontSize(s);};
-
-  const footer=()=>{
-    F(...BG2);doc.rect(0,H-8,W,8,'F');
-    D(...BORDER);doc.setLineWidth(0.3);doc.line(0,H-8,W,H-8);
-    T(...TEXT3);N(6.5);
-    doc.text('LS34 Locsonodj34 - locsonodj34.fr - 06.31.71.36.85 - Avenue de Poussan, 34770 Gigean',W/2,H-3,{align:'center'});
-    doc.text('Page '+pg,W-ML,H-3,{align:'right'});
-  };
+  const footer=()=>{F(...BG2);doc.rect(0,H-8,W,8,'F');D(...BORDER);doc.setLineWidth(0.3);doc.line(0,H-8,W,H-8);T(...TEXT3);N(6.5);doc.text('LS34 Locsonodj34 - locsonodj34.fr - 06.31.71.36.85 - Avenue de Poussan, 34770 Gigean',W/2,H-3,{align:'center'});doc.text('Page '+pg,W-ML,H-3,{align:'right'});};
   const np=()=>{footer();doc.addPage();pg++;F(...BG);doc.rect(0,0,W,H,'F');y=10;};
   const chk=n=>{if(y+n>H-12)np();};
-
-  // Fond blanc
   F(...BG);doc.rect(0,0,W,H,'F');
-
-  // ── EN-TETE ──
-  F(...BG);doc.rect(0,0,W,28,'F');
-  D(...BLUE);doc.setLineWidth(1);doc.line(0,28,W,28);
-
-  // Logo LS34
-  T(...TEXT);B(20);doc.text('LS',ML,18);
-  T(...BLUE);B(20);doc.text('34',ML+12,18);
-
-  // Titre centre
+  F(...BG);doc.rect(0,0,W,28,'F');D(...BLUE);doc.setLineWidth(1);doc.line(0,28,W,28);
+  T(...TEXT);B(20);doc.text('LS',ML,18);T(...BLUE);B(20);doc.text('34',ML+12,18);
   T(...TEXT);B(14);doc.text('FICHE DE SORTIE',W/2,12,{align:'center'});
   T(...TEXT2);N(7.5);doc.text('Location materiel sonorisation / eclairage',W/2,19,{align:'center'});
-
-  // Coordonnées droite
-  T(...GOLD);N(6.5);
-  doc.text('Avenue de Poussan - 34770 Gigean',W-ML,10,{align:'right'});
+  T(...GOLD);N(6.5);doc.text('Avenue de Poussan - 34770 Gigean',W-ML,10,{align:'right'});
   doc.text('06.31.71.36.85 - contact@locsonodj34.fr',W-ML,16,{align:'right'});
   T(...TEXT3);N(6);doc.text('SIRET 93392061300017',W-ML,22,{align:'right'});
-
   y=34;
-
-  // ── BLOC CLIENT ──
   const n=String(f.nom||'-').substring(0,28),dv=String(f.devis||'-'),li=String(f.lieu||'-').substring(0,28),dt=String(f.date||'-'),ac=String(f.acompte||'-'),ca=String(f.caution||'-'),so=String(f.solde||'-'),it=f.installMode==='avec'?'Avec installation':'Sans installation';
-
   F(...BG2);doc.rect(ML,y,PW,36,'F');D(...BORDER);doc.setLineWidth(0.4);doc.rect(ML,y,PW,36,'S');
-  // Bandeau titre
-  F(...BLUE);doc.rect(ML,y,PW,7,'F');
-  D(...BLUE);doc.rect(ML,y,2,7,'F');
-  T(255,255,255);B(7.5);doc.text('INFORMATIONS CLIENT',ML+5,y+4.8);
-  T(255,255,255);N(7);doc.text(it,W-ML-3,y+4.8,{align:'right'});
-
-  N(7.5);T(...TEXT2);
-  doc.text('Nom :',ML+4,y+14);doc.text('Devis :',ML+95,y+14);
-  doc.text('Lieu :',ML+4,y+21);doc.text('Date :',ML+95,y+21);
-  B(8);T(...TEXT);
-  doc.text(n,ML+16,y+14);doc.text(dv,ML+110,y+14);
-  doc.text(li,ML+16,y+21);doc.text(dt,ML+105,y+21);
-
+  F(...BLUE);doc.rect(ML,y,PW,7,'F');T(255,255,255);B(7.5);doc.text('INFORMATIONS CLIENT',ML+5,y+4.8);T(255,255,255);N(7);doc.text(it,W-ML-3,y+4.8,{align:'right'});
+  N(7.5);T(...TEXT2);doc.text('Nom :',ML+4,y+14);doc.text('Devis :',ML+95,y+14);doc.text('Lieu :',ML+4,y+21);doc.text('Date :',ML+95,y+21);
+  B(8);T(...TEXT);doc.text(n,ML+16,y+14);doc.text(dv,ML+110,y+14);doc.text(li,ML+16,y+21);doc.text(dt,ML+105,y+21);
   D(...BORDER);doc.setLineWidth(0.3);doc.line(ML+3,y+25,ML+PW-3,y+25);
-
-  N(7.5);T(...TEXT2);
-  doc.text('Acompte :',ML+4,y+31);T(...TEXT);B(8);doc.text(ac+' EUR',ML+23,y+31);
+  N(7.5);T(...TEXT2);doc.text('Acompte :',ML+4,y+31);T(...TEXT);B(8);doc.text(ac+' EUR',ML+23,y+31);
   T(...TEXT2);N(7.5);doc.text('Caution :',ML+70,y+31);T(...TEXT);B(8);doc.text(ca+' EUR',ML+88,y+31);
   T(...TEXT2);N(7.5);doc.text('Solde :',ML+130,y+31);T(...TEXT);B(8);doc.text(so+' EUR',ML+145,y+31);
-
   y+=42;
-
-  // ── ARTICLES ──
   const cats=getCats();
   [{l:'Sonorisation - Audio',c:'list_enceintes'},{l:'Sonorisation - Mixage',c:'list_mixage'},{l:'Sonorisation - Micro',c:'list_micro'},{l:'Eclairage - Lumiere',c:'list_lumiere'},{l:'Eclairage - Effet',c:'list_effet'},{l:'Accessoires',c:'list_accessoires'},{l:'Cable Audio',c:'list_cable_audio'},{l:'Cable Electrique',c:'list_cable_elec'},{l:'Image',c:'list_image'}].forEach(sec=>{
     const items=(cats[sec.c]||[]).filter(i=>{const s=(f.state||{})[i.id];return s&&(s.on||s.qty>0);});
     if(!items.length)return;
-
-    // Entête section
-    chk(14);
-    F(...BLUE);doc.rect(ML,y,PW,8,'F');
-    F(...GOLD);doc.rect(ML,y,2.5,8,'F');
-    T(255,255,255);B(8.5);doc.text(sec.l.toUpperCase(),ML+6,y+5.5);
-    y+=11;
-
-    // Articles
+    chk(14);F(...BLUE);doc.rect(ML,y,PW,8,'F');F(...GOLD);doc.rect(ML,y,2.5,8,'F');T(255,255,255);B(8.5);doc.text(sec.l.toUpperCase(),ML+6,y+5.5);y+=11;
     items.forEach(item=>{
       const s=(f.state||{})[item.id];
       const aOn=Object.entries(s.acc||{}).filter(([,v])=>v).map(([k])=>String(k));
       const snSel=s.sns&&s.sns.length?s.sns:[];
       const extraLines=(aOn.length?1:0)+(snSel.length?1:0);
-      const lh=8+(extraLines*5);
-      chk(lh+2);
-
-      // Fond alternance
-      F(...BG2);doc.rect(ML,y-0.5,PW,lh,'F');
-      D(...BORDER);doc.setLineWidth(0.2);doc.line(ML,y+lh-0.5,ML+PW,y+lh-0.5);
-
-      // Checkbox
-      F(...BLUE);doc.rect(ML+2,y+1.5,4.5,4.5,'F');
-      T(255,255,255);B(7);doc.text('OK',ML+2.5,y+5);
-
-      // Nom produit
-      const nm=String(item.name||'').substring(0,66);
-      N(8);T(...TEXT);doc.text(nm,ML+9,y+5);
-
-      // Quantite
-      F(...BLUE);doc.roundedRect(W-ML-14,y+1,13,5,1,1,'F');
-      T(255,255,255);B(7.5);doc.text('x'+String(s.qty>0?s.qty:1),W-ML-7.5,y+5,{align:'center'});
-
+      const lh=8+(extraLines*5);chk(lh+2);
+      F(...BG2);doc.rect(ML,y-0.5,PW,lh,'F');D(...BORDER);doc.setLineWidth(0.2);doc.line(ML,y+lh-0.5,ML+PW,y+lh-0.5);
+      F(...BLUE);doc.rect(ML+2,y+1.5,4.5,4.5,'F');T(255,255,255);B(7);doc.text('OK',ML+2.5,y+5);
+      N(8);T(...TEXT);doc.text(String(item.name||'').substring(0,66),ML+9,y+5);
+      F(...BLUE);doc.roundedRect(W-ML-14,y+1,13,5,1,1,'F');T(255,255,255);B(7.5);doc.text('x'+String(s.qty>0?s.qty:1),W-ML-7.5,y+5,{align:'center'});
       y+=8;
-
-      // Accessoires
       if(aOn.length){chk(5);T(...TEXT2);N(6.5);doc.text('  Acc: '+aOn.join(' - '),ML+9,y+3);y+=5;}
-
-      // Numéros de série
       if(snSel.length){chk(5);T(...BLUE);N(6.5);doc.text('  SN: '+snSel.join(' | '),ML+9,y+3);y+=5;}
-    });
-    y+=4;
+    });y+=4;
   });
-
-  // ── ANOMALIES ──
   if(f.anomalies&&f.anomalies.length){
-    chk(20);
-    F(...BG2);doc.rect(ML,y,PW,8,'F');
-    D(...RED);doc.rect(ML,y,2.5,8,'F');
-    T(...RED);B(8.5);doc.text('ANOMALIES CONSTATEES',ML+6,y+5.5);
-    y+=11;
+    chk(20);F(...BG2);doc.rect(ML,y,PW,8,'F');D(...RED);doc.rect(ML,y,2.5,8,'F');T(...RED);B(8.5);doc.text('ANOMALIES CONSTATEES',ML+6,y+5.5);y+=11;
     f.anomalies.forEach(a=>{
-      // Photo
       const imgH=45;chk(imgH+12);
-      try{
-        doc.addImage(a.photo,'JPEG',ML,y,60,imgH);
-      }catch(e){}
-      // Description
-      T(...TEXT);N(8);
-      const lines=doc.splitTextToSize(a.desc||'Sans description',PW-68);
-      lines.slice(0,4).forEach((l,i)=>doc.text(String(l),ML+64,y+8+(i*6)));
+      try{doc.addImage(a.photo,'JPEG',ML,y,60,imgH);}catch(e){}
+      T(...TEXT);N(8);doc.splitTextToSize(a.desc||'Sans description',PW-68).slice(0,4).forEach((l,i)=>doc.text(String(l),ML+64,y+8+(i*6)));
       y+=imgH+6;
     });
   }
-
-  // ── COMMENTAIRE ──
-  if(f.commentaire){
-    const cm=String(f.commentaire);
-    chk(22);
-    F(...BG2);doc.rect(ML,y,PW,18,'F');D(...BORDER);doc.setLineWidth(0.3);doc.rect(ML,y,PW,18,'S');
-    F(...GOLD);doc.rect(ML,y,2.5,18,'F');
-    T(...GOLD);B(7);doc.text('COMMENTAIRE',ML+5,y+5.5);
-    T(...TEXT);N(7.5);doc.splitTextToSize(cm,PW-10).slice(0,3).forEach((l,i)=>doc.text(String(l),ML+5,y+11+(i*5)));
-    y+=22;
-  }
-
-  // ── TEST MATERIEL ──
+  if(f.commentaire){const cm=String(f.commentaire);chk(22);F(...BG2);doc.rect(ML,y,PW,18,'F');D(...BORDER);doc.setLineWidth(0.3);doc.rect(ML,y,PW,18,'S');F(...GOLD);doc.rect(ML,y,2.5,18,'F');T(...GOLD);B(7);doc.text('COMMENTAIRE',ML+5,y+5.5);T(...TEXT);N(7.5);doc.splitTextToSize(cm,PW-10).slice(0,3).forEach((l,i)=>doc.text(String(l),ML+5,y+11+(i*5)));y+=22;}
   if(f.testMode){
-    chk(14);
-    const isOk=f.testMode==='ok';
-    F(isOk?230:255,isOk?245:230,isOk?230:230);
-    doc.rect(ML,y,PW,10,'F');
+    chk(14);const isOk=f.testMode==='ok';
+    F(isOk?230:255,isOk?245:230,isOk?230:230);doc.rect(ML,y,PW,10,'F');
     D(...(isOk?GREEN:RED));doc.setLineWidth(0.5);doc.rect(ML,y,PW,10,'S');
-    T(...(isOk?GREEN:RED));B(9);
-    doc.text(isOk?'✓  MATERIEL TESTE AVEC LE CLIENT':'⚠  MATERIEL NON TESTE AVEC LE CLIENT',W/2,y+6.5,{align:'center'});
-    y+=14;
+    T(...(isOk?GREEN:RED));B(9);doc.text(isOk?'MATERIEL TESTE AVEC LE CLIENT':'MATERIEL NON TESTE AVEC LE CLIENT',W/2,y+6.5,{align:'center'});y+=14;
   }
-
-  // ── SIGNATURE ──
   chk(42);y+=3;
   F(...BG2);doc.rect(ML,y,PW,38,'F');D(...BORDER);doc.setLineWidth(0.4);doc.rect(ML,y,PW,38,'S');
-
-  // Bandeau titre signature
-  F(...BLUE);doc.rect(ML,y,PW,7,'F');
-  T(255,255,255);B(7.5);doc.text('SIGNATURE CLIENT',ML+5,y+4.8);
-
-  // Zone signature
-  F(255,255,255);doc.rect(ML+3,y+9,90,25,'F');
-  D(...BORDER);doc.setLineWidth(0.3);doc.rect(ML+3,y+9,90,25,'S');
-
-  if(f.signature){
-    doc.addImage(f.signature,'PNG',ML+3,y+9,90,25);
-  } else {
-    T(...TEXT3);N(7);doc.text('Signature du client',ML+48,y+23,{align:'center'});
-  }
-
-  // Infos droite
-  T(...TEXT2);N(7);doc.text('LS34 Locsonodj34',ML+100,y+20);
-  T(...TEXT3);N(6.5);doc.text('locsonodj34.fr',ML+100,y+27);
-  doc.text('06.31.71.36.85',ML+100,y+33);
-
-  y+=44;
-
-  footer();
-  return doc;
+  F(...BLUE);doc.rect(ML,y,PW,7,'F');T(255,255,255);B(7.5);doc.text('SIGNATURE CLIENT',ML+5,y+4.8);
+  F(255,255,255);doc.rect(ML+3,y+9,90,25,'F');D(...BORDER);doc.setLineWidth(0.3);doc.rect(ML+3,y+9,90,25,'S');
+  if(f.signature){doc.addImage(f.signature,'PNG',ML+3,y+9,90,25);}else{T(...TEXT3);N(7);doc.text('Signature du client',ML+48,y+23,{align:'center'});}
+  T(...TEXT2);N(7);doc.text('LS34 Locsonodj34',ML+100,y+20);T(...TEXT3);N(6.5);doc.text('locsonodj34.fr',ML+100,y+27);doc.text('06.31.71.36.85',ML+100,y+33);
+  y+=44;footer();return doc;
 }
 
-// ══ UTILS ══
 function toast(msg,err=false,ok=false){const t=document.getElementById('toast');t.textContent=msg;t.className='toast show'+(err?' err':ok?' ok':'');clearTimeout(t._t);t._t=setTimeout(()=>{t.className='toast';},3000);}
 function showL(l){document.getElementById('slbl').textContent=l;document.getElementById('lov').classList.add('open');}
 function hideL(){document.getElementById('lov').classList.remove('open');}
 
-// ══ INIT ══
+// ══ SERVICE WORKER hors ligne ══
+if('serviceWorker' in navigator){
+  window.addEventListener('load', ()=>{
+    navigator.serviceWorker.register('./sw.js')
+      .then(()=>console.log('SW actif'))
+      .catch(e=>console.log('SW erreur:',e));
+  });
+}
+
 resetS();rAllItems();rFiches();
 </script>
 </body>
-</html>
+  </html>
